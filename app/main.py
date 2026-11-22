@@ -82,7 +82,7 @@ try:
                              QSyntaxHighlighter, QTextCharFormat)
     from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
-                                 QPushButton, QSplitter, QTabWidget,
+                                 QPushButton, QSpinBox, QSplitter, QTabWidget,
                                  QTextBrowser, QTreeWidget, QTreeWidgetItem,
                                  QVBoxLayout, QWidget)
 except ImportError:
