@@ -969,7 +969,7 @@ class MainWindow(QMainWindow):
         prompt += f"\n\n[Aktuelle Lektion: {lesson_abs}]"
 
         slug = re.sub(r"[^a-z0-9]+", "_", self.current_lesson.lower()).strip("_")
-        session_id = "ses_trainer_" + slug
+        session_id = "ses_trainer_v2_" + slug
 
         args = [OPENCODE, "run", "--standalone", "-s", session_id]
         model = (self.settings.value("model", "") or "").strip()
