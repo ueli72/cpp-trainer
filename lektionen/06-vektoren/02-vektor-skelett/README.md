@@ -38,5 +38,8 @@ Durchschnitt: 5.00
 - Der Durchschnitt: Summe durch Anzahl — beachte die Ganzzahldivision.
 
 ## Testen
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test vektoren/02`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run vektoren/02`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
-`./trainer test struct/07vektoren/02` — die Testfälle liegen sichtbar in `tests/`

@@ -38,8 +38,10 @@ Skalarprodukt: 32.00
 - Zwei Nachkommastellen: `std::cout << std::fixed << std::setprecision(2);` (aus `<iomanip>`), einmal in `main` gesetzt gilt es für alle folgenden Ausgaben.
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test klasse/02`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/02`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test rekursion/09klasse/02`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/02klasse/02`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

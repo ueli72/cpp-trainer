@@ -27,7 +27,6 @@ Summe: 16:35
 
 Der **Bauplan steht als Kommentare in `main.cpp`** — öffne sie und arbeite die 5 Schritte ab. `Zeit.h` und `Zeit.cpp` existieren bereits, enthalten aber selbst nur Kommentar-Erinnerungen.
 
-Nach jedem Schritt ein `./trainer build 08` bzw. `./trainer run klasse/04klasse/04` — die Bauplan-Kommentare nennen dir nach jedem Schritt einen Meilenstein.
 
 ## Wo du was wiederverwendest
 
@@ -47,8 +46,10 @@ Nach jedem Schritt ein `./trainer build 08` bzw. `./trainer run klasse/04klasse/
 - **setw-Falle:** `std::setw(2)` gilt nur für die **nächste** Ausgabe — vor jeder Komponente wiederholen (genaue Zeile im Bauplan, Schritt 5).
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test klasse/04`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/04`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test rekursion/09klasse/04`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/04klasse/04`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

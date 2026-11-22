@@ -44,8 +44,10 @@ Beispiel `10 2`: gibZiffernAus(10) → ruft gibZiffernAus(5) → ruft gibZiffern
 - Vergleiche mit deiner Lösung aus Ziffern 04: dort brauchtest du Tricks für die Reihenfolge — hier erledigt die Rekursion das allein.
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test rekursion/03`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run rekursion/03`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test rekursion/08rekursion/03`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run rekursion/03rekursion/03`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

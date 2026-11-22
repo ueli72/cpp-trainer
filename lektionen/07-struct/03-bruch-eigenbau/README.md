@@ -43,8 +43,10 @@ Der **Bauplan steht als Kommentare in `main.cpp`** — vier Schritte, alles dara
 - Kein Kürzen, keine Dezimalzahl — exakt `Produkt: <z>/<n>`.
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test struct/03`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run struct/03`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test klasse/08struct/03`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run struct/03struct/03`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

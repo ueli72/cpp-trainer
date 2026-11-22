@@ -39,8 +39,10 @@ In Worten: die letzte Ziffer (`n % 10`) plus die Quersumme des Rests (`n / 10`).
 - Die Funktion braucht einen Namen und zwei feste Teile: `if` für den Abbruch, sonst der rekursive Aufruf. Keine Schleife nötig!
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test rekursion/02`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run rekursion/02`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test rekursion/08rekursion/02`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run rekursion/02rekursion/02`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

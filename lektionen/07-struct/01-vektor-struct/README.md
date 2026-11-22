@@ -61,8 +61,10 @@ Die Formeln kennst du aus Eingabe 04:
 - **Vektor ausgeben:** `std::cout << c.x << "," << c.y << "," << c.z;` — Kommas ohne Leerzeichen, wie in der Eingabe.
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test struct/01`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run struct/01`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test klasse/08struct/01`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run struct/01struct/01`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

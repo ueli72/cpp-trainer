@@ -40,8 +40,10 @@ Gesamt: 19.75
 - Stückzahl 0 ist erlaubt (der Posten kostet dann nichts).
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test struct/02`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run struct/02`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test klasse/08struct/02`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run struct/02struct/02`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

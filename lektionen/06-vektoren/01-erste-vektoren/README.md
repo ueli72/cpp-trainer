@@ -31,5 +31,8 @@ Summe: 15
 - Das Einlesen läuft wie gewohnt: `while (std::cin >> x)`
 
 ## Testen
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test vektoren/01`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run vektoren/01`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
-`./trainer test struct/07vektoren/01` — die Testfälle liegen sichtbar in `tests/`

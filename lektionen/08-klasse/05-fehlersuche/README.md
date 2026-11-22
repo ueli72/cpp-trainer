@@ -30,5 +30,8 @@ Skalarprodukt: 32
   verrechnen — `this->x` und `other.x`.
 
 ## Testen
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test klasse/05`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/05`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
-`./trainer test rekursion/09klasse/05` — die Testfälle liegen sichtbar in `tests/`

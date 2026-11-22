@@ -39,8 +39,10 @@ Skalarprodukt: 32.00
 - **Beim ersten Kompilieren eine Warnung?** `unused parameter 'other'` ist solange normal, wie die Methode noch leer ist — sie verschwindet, sobald du `other` benutzt.
 
 ## So testest du
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test klasse/03`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/03`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
 - **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
-- **Im Terminal:** `./trainer test rekursion/09klasse/03`
-- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/03klasse/03`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

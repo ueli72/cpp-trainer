@@ -26,5 +26,8 @@ kompiliert und terminiert, rechnet aber falsch).
 - Teste mit n = 0 zuerst: Der kleinste Fall verrät den ersten Fehler.
 
 ## Testen
+- **In der App:** Lektion im Baum wählen → 💾 Speichern (bei Änderungen) → 🧪 Testen — die Ausgabe erscheint in der Konsole, die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test rekursion/04`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run rekursion/04`
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
 
-`./trainer test rekursion/08rekursion/04` — die Testfälle liegen sichtbar in `tests/`
