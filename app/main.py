@@ -160,11 +160,11 @@ def saved_providers():
         return set()
 
 
-def monospace():
+def monospace(size=10):
     f = QFont("Monospace")
     f.setStyleHint(QFont.StyleHint.TypeWriter)
     f.setFixedPitch(True)
-    f.setPointSize(10)
+    f.setPointSize(size)
     return f
 
 
@@ -615,6 +615,51 @@ class ConfigDialog(QDialog):
         super().done(result)
 
 
+# ------------------------------------------------------------- Schriftgrößen
+
+class ZoomDialog(QDialog):
+    """Schriftgröße je Fensterbereich — ändert sich live."""
+
+    BEREICHE = [("baum", "Aufgabenbaum"), ("editor", "Editor"),
+                ("konsole", "Konsole"), ("agent", "Agent-Chat"),
+                ("aufgabe", "Aufgabe / Cheatsheet")]
+
+    def __init__(self, parent, hauptfenster):
+        super().__init__(parent)
+        self.setWindowTitle("Schriftgrößen")
+        self.hauptfenster = hauptfenster
+        self.resize(420, 260)
+        v = QVBoxLayout(self)
+        v.addWidget(QLabel("Schriftgröße je Fensterbereich (Punkte):"))
+        self.spins = {}
+        for key, label in self.BEREICHE:
+            zeile = QHBoxLayout()
+            zeile.addWidget(QLabel(label + ":"))
+            spin = QSpinBox()
+            spin.setRange(7, 24)
+            spin.setValue(int(hauptfenster.sizes[key]))
+            spin.valueChanged.connect(
+                lambda wert, k=key: hauptfenster.set_size(k, wert))
+            zeile.addWidget(spin)
+            self.spins[key] = spin
+            v.addLayout(zeile)
+        v.addWidget(QLabel(
+            "Die Größe wird sofort angewendet und gespeichert."))
+        row = QHBoxLayout()
+        b_reset = QPushButton("Zurücksetzen (10)")
+        b_reset.clicked.connect(self.zurueck)
+        row.addWidget(b_reset)
+        row.addStretch(1)
+        b_close = QPushButton("Schließen")
+        b_close.clicked.connect(self.accept)
+        row.addWidget(b_close)
+        v.addLayout(row)
+
+    def zurueck(self):
+        for spin in self.spins.values():
+            spin.setValue(10)
+
+
 # ------------------------------------------------------------- Hauptfenster
 
 class MainWindow(QMainWindow):
@@ -630,6 +675,7 @@ class MainWindow(QMainWindow):
         self.progress = self._load_progress()
 
         self.settings = QSettings("cpp-trainer", "trainer-app")
+        self.sizes = self._load_sizes()
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -639,7 +685,7 @@ class MainWindow(QMainWindow):
         # --- Baum (links)
         self.tree = QTreeWidget()
         self.tree.setHeaderLabel("Aufgaben")
-        self.tree.setFont(monospace())
+        self.tree.setFont(monospace(self.sizes["baum"]))
         self.tree.itemClicked.connect(self.tree_clicked)
         self.reload_tree()
 
@@ -665,6 +711,10 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.btn_test)
         bar.addWidget(self.btn_update)
         bar.addStretch(1)
+        self.btn_zoom = QPushButton("Aa")
+        self.btn_zoom.setToolTip("Schriftgrößen einstellen")
+        self.btn_zoom.clicked.connect(self.open_zoom)
+        bar.addWidget(self.btn_zoom)
         self.btn_cheat = QPushButton("❓ Cheatsheet")
         self.btn_cheat.setEnabled(False)
         self.btn_cheat.clicked.connect(self.open_cheatsheet)
@@ -672,7 +722,7 @@ class MainWindow(QMainWindow):
         center_layout.addLayout(bar)
 
         self.tabs = QTabWidget()
-        self.tabs.setFont(monospace())
+        self.tabs.setFont(monospace(self.sizes["editor"]))
         self.tabs.setDocumentMode(True)
         center_layout.addWidget(self.tabs, 1)
 
@@ -705,7 +755,7 @@ class MainWindow(QMainWindow):
 
         # --- Aufgabe (rechts)
         self.task_title = QLabel("")
-        self.task_title.setFont(monospace())
+        self.task_title.setFont(monospace(self.sizes["aufgabe"]))
         self.task_title.setStyleSheet("font-weight:bold; padding:2px;")
         self.task_browser = QTextBrowser()
         task_widget = QWidget()
@@ -722,6 +772,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(split)
 
         self.cheat_windows = []
+        self.apply_all_sizes()
 
     # ------------------------------------------------------------ Baum
 
@@ -764,7 +815,7 @@ class MainWindow(QMainWindow):
         self.tabs.clear()
         for path in files:
             editor = CodeEditor()
-            editor.setFont(monospace())
+            editor.setFont(monospace(self.sizes["editor"]))
             try:
                 with open(path, encoding="utf-8") as f:
                     editor.setPlainText(f.read())
@@ -846,6 +897,57 @@ class MainWindow(QMainWindow):
                     litem.setText(0, title)
                     litem.setForeground(0, QBrush(QColor(SCHEME["text"])))
         self.tree.setHeaderLabels([f"Aufgaben — {solved}/{total} gelöst"])
+
+    # ------------------------------------------------------------ Schriftgrößen
+
+    def _load_sizes(self):
+        standard = {"baum": 10, "editor": 10, "konsole": 10, "agent": 10,
+                    "aufgabe": 10}
+        sizes = {}
+        for k, v in standard.items():
+            sizes[k] = int(self.settings.value(f"sizes/{k}", v))
+        return sizes
+
+    def _save_sizes(self):
+        try:
+            for k, v in self.sizes.items():
+                self.settings.setValue(f"sizes/{k}", v)
+        except OSError as e:
+            self.console.write_line(
+                f"Schriftgrößen konnten nicht gespeichert werden: {e}", color="#c62828")
+
+    def set_size(self, key, value):
+        self.sizes[key] = int(value)
+        self._save_sizes()
+        self.apply_all_sizes()
+
+    def apply_all_sizes(self):
+        s = self.sizes
+        self.tree.setFont(monospace(s["baum"]))
+        self.tabs.setFont(monospace(s["editor"]))
+        for i in range(self.tabs.count()):
+            ed = self.tabs.widget(i)
+            if ed is None:
+                continue
+            ed.setFont(monospace(s["editor"]))
+            ed.document().setDefaultFont(monospace(s["editor"]))
+            fm = ed.fontMetrics()
+            ed.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
+        self.console.setFont(monospace(s["konsole"]))
+        self.console_input.setFont(monospace(s["konsole"]))
+        self.agent_chat.setFont(monospace(s["agent"]))
+        self.agent_input.setFont(monospace(s["agent"]))
+        self.agent_input.setFixedHeight(
+            int(3.4 * self.agent_input.fontMetrics().height()))
+        self.task_title.setFont(monospace(s["aufgabe"]))
+        self.task_browser.setFont(monospace(s["aufgabe"]))
+        for win in self.cheat_windows:
+            for tb in win.findChildren(QTextBrowser):
+                tb.setFont(monospace(s["aufgabe"]))
+
+    def open_zoom(self):
+        dlg = ZoomDialog(self, self)
+        dlg.exec()
 
     # ------------------------------------------------------------ Prozesse
 
@@ -1160,7 +1262,7 @@ class MainWindow(QMainWindow):
         win.setWindowTitle(f"Cheatsheet — {thema}")
         win.resize(760, 820)
         browser = QTextBrowser()
-        browser.setFont(monospace())
+        browser.setFont(monospace(self.sizes["aufgabe"]))
         browser.setHtml(md_html(content))
         win.setCentralWidget(browser)
         win.show()

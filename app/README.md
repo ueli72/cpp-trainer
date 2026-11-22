@@ -36,6 +36,7 @@ gibt `start.sh` den passenden Installationshinweis aus.
 | **Starten** | kompiliert und startet das Programm mit dem im Dropdown gewählten Testfall als Eingabe |
 | **🔄 Updates** | holt neue Aufgaben von GitHub (`./trainer update`) — danach wird der Baum automatisch aktualisiert |
 | **🧹** (Ecke unten) | leert die sichtbare Ansicht (Konsole bzw. Agent-Chat) |
+| **Aa** (Taskleiste) | Schriftgröße je Fensterbereich einstellen (Baum, Editor, Konsole, Agent, Aufgabe) — wird gespeichert |
 | **❓ Cheatsheet** | öffnet das Cheatsheet des Themas in einem eigenen Fenster |
 | **Konsole (unten)** | Ausgabe von Kompilieren/Testen/Starten — während ein Programm läuft, kannst du unten Eingaben tippen (Enter = senden), so funktionieren `std::cin`-Programme |
 | **Agent (unten)** | Chat mit OpenCode — siehe unten |
