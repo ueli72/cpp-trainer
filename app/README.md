@@ -97,3 +97,12 @@ passt. Voraussetzungen auf dem Zielsystem: `python3` + venv/pip
 ```
 prüft Kopflos: Import, Baum (7 Themen / 25 Lektionen), Laden einer
 Lektion, Markdown-Konvertierung, Kompilier-Lauf.
+
+
+## Fehlerbehebung
+
+| Symptom | Ursache/Lösung |
+|---|---|
+| „Modelle werden geladen" endet nicht | Läuft `opencode models` im Terminal im Projektordner? Beim ersten Start lädt opencode die Modell-Liste aus dem Netz. |
+| „opencode konnte nicht gestartet werden" | opencode nicht installiert → `./install.sh` (Schritt 3) oder `opencode` einmal im Terminal starten (Ersteinrichtung). |
+| Agent antwortet mit Usage-Limit-Fehler | Modell-Feld füllen, z. B. `opencode/glm-5.3-flash` (⚙-Dialog). |
