@@ -39,6 +39,7 @@ Skalarprodukt: 32.00
 
 ## So testest du
 
-- `./trainer test klasse/02klasse/02` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
-- `./trainer run klasse/02klasse/02` — das Programm selbst ausprobieren
+- **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test klasse/02`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run klasse/02`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

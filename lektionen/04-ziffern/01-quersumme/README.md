@@ -30,6 +30,7 @@ Quersumme: 15
 
 ## So testest du
 
-- `./trainer test ziffern/01` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
-- `./trainer run ziffern/01` — das Programm selbst ausprobieren
+- **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test ziffern/01`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run ziffern/01`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

@@ -38,6 +38,7 @@ Gib das kleine Einmaleins zu `n` aus — **10 Zeilen**, von `1` bis `10`. Jede Z
 
 ## So testest du
 
-- `./trainer test schleifen/01` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
-- `./trainer run schleifen/01` — das Programm selbst ausprobieren
+- **In der App:** 🧪 Testen — die Testfälle liegen sichtbar in `tests/`
+- **Im Terminal:** `./trainer test schleifen/01`
+- **Ausprobieren:** ▶ Starten (App) bzw. `./trainer run schleifen/01`
 - Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
