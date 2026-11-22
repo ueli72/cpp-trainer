@@ -549,19 +549,6 @@ class ConfigDialog(QDialog):
         self.models_status = QLabel("Modelle werden geladen …")
         v.addWidget(self.models_status)
 
-        v.addWidget(QLabel("Erscheinungsbild:"))
-        modus = self.settings.value("theme", "") or "auto"
-        self.rb_auto = QRadioButton("Automatisch (folgt dem System)")
-        self.rb_hell = QRadioButton("Hell erzwingen")
-        self.rb_dunkel = QRadioButton("Dunkel erzwingen")
-        fuer = {"auto": self.rb_auto, "hell": self.rb_hell, "dunkel": self.rb_dunkel}
-        fuer[modus].setChecked(True)
-        for wert, rb in (("auto", self.rb_auto), ("hell", self.rb_hell),
-                         ("dunkel", self.rb_dunkel)):
-            rb.toggled.connect(
-                lambda an, w=wert: self.hauptfenster.apply_theme(w) if an else None)
-            v.addWidget(rb)
-
         v.addWidget(QLabel("Pre-Prompt — Vorgabe für jede Agent-Antwort:"))
         self.preprompt_edit = QPlainTextEdit()
         self.preprompt_edit.setPlaceholderText(
@@ -797,6 +784,21 @@ class EinstellungenDialog(QDialog):
             self.spins[key] = spin
             vs.addLayout(zeile)
         v.addWidget(gruppe_schrift)
+
+        gruppe_erscheinung = QGroupBox("Erscheinungsbild")
+        ve = QVBoxLayout(gruppe_erscheinung)
+        modus = self.hauptfenster.settings.value("theme", "") or "auto"
+        self.rb_auto = QRadioButton("Automatisch (folgt dem System)")
+        self.rb_hell = QRadioButton("Hell erzwingen")
+        self.rb_dunkel = QRadioButton("Dunkel erzwingen")
+        fuer = {"auto": self.rb_auto, "hell": self.rb_hell, "dunkel": self.rb_dunkel}
+        fuer[modus].setChecked(True)
+        for wert, rb in (("auto", self.rb_auto), ("hell", self.rb_hell),
+                         ("dunkel", self.rb_dunkel)):
+            rb.toggled.connect(
+                lambda an, w=wert: self.hauptfenster.apply_theme(w) if an else None)
+            ve.addWidget(rb)
+        v.addWidget(gruppe_erscheinung)
 
         row = QHBoxLayout()
         row.addStretch(1)
