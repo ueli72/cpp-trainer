@@ -81,7 +81,8 @@ try:
     from PyQt6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QIcon,
                              QKeySequence, QPainter, QPalette, QShortcut,
                              QSyntaxHighlighter, QTextCharFormat)
-    from PyQt6.QtWidgets import (QApplication, QMessageBox, QComboBox,
+    from PyQt6.QtWidgets import (QApplication, QGroupBox, QMessageBox,
+                                 QComboBox,
                                  QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
                                  QPushButton, QSpinBox, QSplitter, QTabWidget,
@@ -699,10 +700,10 @@ class ConfigDialog(QDialog):
         super().done(result)
 
 
-# ------------------------------------------------------------- Schriftgrößen
+# ------------------------------------------------------------- Einstellungen
 
-class ZoomDialog(QDialog):
-    """Schriftgröße je Fensterbereich — ändert sich live."""
+class EinstellungenDialog(QDialog):
+    """Einstellungen: Updates von GitHub holen + Schriftgrößen."""
 
     BEREICHE = [("baum", "Aufgabenbaum"), ("editor", "Editor"),
                 ("konsole", "Konsole"), ("agent", "Agent-Chat"),
@@ -710,11 +711,28 @@ class ZoomDialog(QDialog):
 
     def __init__(self, parent, hauptfenster):
         super().__init__(parent)
-        self.setWindowTitle("Schriftgrößen")
+        self.setWindowTitle("Einstellungen")
         self.hauptfenster = hauptfenster
-        self.resize(420, 260)
+        self.resize(540, 440)
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("Schriftgröße je Fensterbereich (Punkte):"))
+
+        gruppe_updates = QGroupBox("Updates")
+        vu = QVBoxLayout(gruppe_updates)
+        vu.addWidget(QLabel(
+            "Sucht neue Aufgaben von GitHub und installiert sie —\n"
+            "eigene Lösungen bleiben dabei erhalten."))
+        self.btn_update = QPushButton("🔄 Jetzt nach Updates suchen")
+        self.btn_update.clicked.connect(self.update_starten)
+        vu.addWidget(self.btn_update)
+        self.update_status = QLabel("")
+        vu.addWidget(self.update_status)
+        self.update_ausgabe = Console()
+        self.update_ausgabe.setFixedHeight(120)
+        vu.addWidget(self.update_ausgabe, 1)
+        v.addWidget(gruppe_updates)
+
+        gruppe_schrift = QGroupBox("Schriftgrößen (Punkte)")
+        vs = QVBoxLayout(gruppe_schrift)
         self.spins = {}
         for key, label in self.BEREICHE:
             zeile = QHBoxLayout()
@@ -726,18 +744,30 @@ class ZoomDialog(QDialog):
                 lambda wert, k=key: hauptfenster.set_size(k, wert))
             zeile.addWidget(spin)
             self.spins[key] = spin
-            v.addLayout(zeile)
-        v.addWidget(QLabel(
-            "Die Größe wird sofort angewendet und gespeichert."))
+            vs.addLayout(zeile)
+        v.addWidget(gruppe_schrift)
+
         row = QHBoxLayout()
-        b_reset = QPushButton("Zurücksetzen (10)")
-        b_reset.clicked.connect(self.zurueck)
-        row.addWidget(b_reset)
         row.addStretch(1)
         b_close = QPushButton("Schließen")
         b_close.clicked.connect(self.accept)
         row.addWidget(b_close)
         v.addLayout(row)
+
+    def update_gestartet(self):
+        self.update_status.setText(
+            "Update läuft — der Fortschritt erscheint im Feld unten.\n"
+            "Der Aufgabenbaum wird danach automatisch aktualisiert.")
+
+    def update_starten(self):
+        self.update_ausgabe.clear_output()
+        self.hauptfenster.setze_zusatz_ausgabe(self.update_ausgabe)
+        self.hauptfenster.do_update()
+        self.update_gestartet()
+
+    def done(self, result):
+        self.hauptfenster.setze_zusatz_ausgabe(None)
+        super().done(result)
 
     def zurueck(self):
         for spin in self.spins.values():
@@ -756,6 +786,7 @@ class MainWindow(QMainWindow):
         self.proc = None                # laufender trainer-Prozess
         self.agent_proc = None          # laufender Agent-Prozess
         self.last_output = ""           # letzte Ausgabe (für den Agenten)
+        self.zusatz_ausgabe = None      # zusätzliches Ausgabe-Feld (Einstellungen)
         self.progress = self._load_progress()
 
         self.settings = QSettings("cpp-trainer", "trainer-app")
@@ -782,8 +813,6 @@ class MainWindow(QMainWindow):
         self.btn_build = QPushButton("🛠 Kompilieren")
         self.btn_test = QPushButton("🧪 Testen")
         self.btn_run = QPushButton("▶ Starten")
-        self.btn_update = QPushButton("🔄 Updates")
-        self.btn_update.setToolTip("Neue Aufgaben von GitHub holen (./trainer update)")
         self.btn_save = QPushButton("💾 Speichern")
         self.btn_save.setToolTip(
             "Alle geänderten Dateien speichern (Strg+S) — aktiv, sobald etwas "
@@ -797,7 +826,6 @@ class MainWindow(QMainWindow):
         self.btn_build.clicked.connect(self.do_build)
         self.btn_test.clicked.connect(self.do_test)
         self.btn_run.clicked.connect(self.do_run)
-        self.btn_update.clicked.connect(self.do_update)
         self.btn_save.clicked.connect(self.do_save)
         QShortcut(QKeySequence.StandardKey.Save, self).activated.connect(self.do_save)
         self.btn_reset.clicked.connect(self.do_reset)
@@ -805,13 +833,8 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.btn_run)
         bar.addWidget(self.btn_test)
         bar.addWidget(self.btn_save)
-        bar.addWidget(self.btn_update)
         bar.addWidget(self.btn_reset)
         bar.addStretch(1)
-        self.btn_zoom = QPushButton("Aa")
-        self.btn_zoom.setToolTip("Schriftgrößen einstellen")
-        self.btn_zoom.clicked.connect(self.open_zoom)
-        bar.addWidget(self.btn_zoom)
         self.btn_cheat = QPushButton("❓ Cheatsheet")
         self.btn_cheat.setEnabled(False)
         self.btn_cheat.clicked.connect(self.open_cheatsheet)
@@ -858,7 +881,15 @@ class MainWindow(QMainWindow):
         task_widget = QWidget()
         task_layout = QVBoxLayout(task_widget)
         task_layout.setContentsMargins(0, 0, 0, 0)
-        task_layout.addWidget(self.task_title)
+        titel_zeile = QHBoxLayout()
+        titel_zeile.addWidget(self.task_title)
+        titel_zeile.addStretch(1)
+        self.btn_einstellungen = QPushButton("⚙")
+        self.btn_einstellungen.setFixedWidth(34)
+        self.btn_einstellungen.setToolTip("Einstellungen: Updates & Schriftgrößen")
+        self.btn_einstellungen.clicked.connect(self.open_einstellungen)
+        titel_zeile.addWidget(self.btn_einstellungen)
+        task_layout.addLayout(titel_zeile)
         task_layout.addWidget(self.task_browser, 1)
 
         self.split_main = QSplitter(Qt.Orientation.Horizontal)
@@ -984,6 +1015,11 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------ Dateien
 
+    def open_einstellungen(self):
+        dlg = EinstellungenDialog(self, self)
+        dlg.exec()
+        self.update_save_button()
+
     def clear_current_view(self):
         if self.bottom.currentIndex() == 0:
             self.console.clear_output()
@@ -1093,18 +1129,25 @@ class MainWindow(QMainWindow):
             for tb in win.findChildren(QTextBrowser):
                 tb.setFont(monospace(s["aufgabe"]))
 
-    def open_zoom(self):
-        dlg = ZoomDialog(self, self)
-        dlg.exec()
-
     # ------------------------------------------------------------ Prozesse
 
     def set_busy(self, busy):
-        for b in (self.btn_build, self.btn_test, self.btn_run, self.btn_reset,
-                  self.btn_update):
+        for b in (self.btn_build, self.btn_test, self.btn_run, self.btn_reset):
             b.setEnabled(not busy)
         self.console_input.setEnabled(busy)
         self.agent_send_btn.setEnabled(self.agent_proc is None and not busy)
+
+    def setze_zusatz_ausgabe(self, widget):
+        """Zusätzliches Ausgabe-Feld (z. B. im Einstellungen-Dialog)."""
+        self.zusatz_ausgabe = widget
+
+    def _git_head(self):
+        try:
+            r = subprocess.run(["git", "-C", ROOT, "rev-parse", "HEAD"],
+                               capture_output=True, text=True, timeout=10)
+            return r.stdout.strip() if r.returncode == 0 else None
+        except (OSError, subprocess.TimeoutExpired):
+            return None
 
     def run_process(self, cmd, kind="build", lesson=None, stdin_text=None,
                     header=None, interactive=False):
@@ -1116,6 +1159,7 @@ class MainWindow(QMainWindow):
         self.proc_kind = kind
         self.proc_lesson = lesson
         self.last_output = ""
+        self._head_vorher = self._git_head() if kind == "update" else None
         self.proc = QProcess(self)
         self.proc.setWorkingDirectory(ROOT)
         self.proc.readyReadStandardOutput.connect(self._proc_stdout)
@@ -1137,11 +1181,15 @@ class MainWindow(QMainWindow):
         data = bytes(self.proc.readAllStandardOutput()).decode("utf-8", "replace")
         self.last_output += data
         self.console.write(data)
+        if self.zusatz_ausgabe is not None:
+            self.zusatz_ausgabe.write(data)
 
     def _proc_stderr(self):
         data = bytes(self.proc.readAllStandardError()).decode("utf-8", "replace")
         self.last_output += data
         self.console.write(data)
+        if self.zusatz_ausgabe is not None:
+            self.zusatz_ausgabe.write(data)
 
     def _proc_finished(self, code, _status):
         self.console.flush()
@@ -1157,6 +1205,17 @@ class MainWindow(QMainWindow):
             if (self.current_lesson
                     and os.path.isdir(os.path.join(LEKTIONEN_DIR, self.current_lesson))):
                 self.load_lesson(self.current_lesson)
+
+        if kind == "update":
+            head_nachher = self._git_head()
+            if (self._head_vorher is not None and head_nachher is not None
+                    and head_nachher != self._head_vorher):
+                hinweis = ("Der Projektstand hat sich geändert — bitte die App "
+                           "schließen und neu starten (Icon), damit alles "
+                           "geladen wird.")
+                self.console.write_line(hinweis, color=SCHEME["warn"])
+                if self.zusatz_ausgabe is not None:
+                    self.zusatz_ausgabe.write_line(hinweis, color=SCHEME["warn"])
 
         if kind == "reset":
             self.progress = self._load_progress()
