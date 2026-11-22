@@ -15,6 +15,7 @@ import re
 import shlex
 import subprocess
 import sys
+import shutil
 import traceback
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,31 +23,45 @@ LEKTIONEN_DIR = os.path.join(ROOT, "lektionen")
 TRAINER = os.path.join(ROOT, "trainer")
 PROGRESS_FILE = os.path.join(ROOT, "fortschritt.json")
 
+# opencode auch ohne Shell-Profil finden (z. B. bei Start per Desktop-Icon):
+# ~/.opencode/bin vor den PATH stellen.
+_opencode_bin = os.path.join(os.path.expanduser("~"), ".opencode", "bin")
+if os.path.isdir(_opencode_bin):
+    os.environ["PATH"] = _opencode_bin + os.pathsep + os.environ.get("PATH", "")
+OPENCODE = shutil.which("opencode") or "opencode"
+
 # ---------------------------------------------------------------- Markdown
 
 try:
     import markdown
 
     _MD_EXT = ["fenced_code", "tables"]
-    _MD_CFG = {}
+    _MD_CFG_BASIS = {}
     try:
         import pygments  # noqa: F401
         _MD_EXT.append("codehilite")
-        _MD_CFG = {"codehilite": {"noclasses": True,
-                                  "pygments_style": "friendly",
-                                  "guess_lang": False}}
+        _MD_CFG_BASIS = {"guess_lang": False}
     except ImportError:
         pass
 
+    def _md_cfg(mit_nl2br=False):
+        cfg = dict(_MD_CFG_BASIS)
+        if "codehilite" in _MD_EXT:
+            cfg["codehilite"] = {"noclasses": True,
+                                 "pygments_style": SCHEME["pygments"],
+                                 "guess_lang": False}
+        ext = _MD_EXT + ["nl2br"] if mit_nl2br else _MD_EXT
+        return ext, cfg
+
     def md_html(text):
         """Klassisches Markdown (Aufgabe/Cheatsheet): Absätze über Leerzeilen."""
-        return markdown.markdown(text, extensions=_MD_EXT,
-                                 extension_configs=_MD_CFG)
+        ext, cfg = _md_cfg()
+        return markdown.markdown(text, extensions=ext, extension_configs=cfg)
 
     def md_chat_html(text):
         """Chat-Variante: einzelne Zeilenumbrüche bleiben sichtbar (nl2br)."""
-        return markdown.markdown(text, extensions=_MD_EXT + ["nl2br"],
-                                 extension_configs=_MD_CFG)
+        ext, cfg = _md_cfg(mit_nl2br=True)
+        return markdown.markdown(text, extensions=ext, extension_configs=cfg)
 except ImportError:
     def md_html(text):
         return "<pre style=\"font-family:monospace\">" + html.escape(text) + "</pre>"
@@ -63,8 +78,8 @@ def fail(msg):
 try:
     from PyQt6.QtCore import (QEvent, Qt, QTimer, QProcess,
                               QRegularExpression, QSettings)
-    from PyQt6.QtGui import (QBrush, QColor, QFont, QIcon, QSyntaxHighlighter,
-                             QTextCharFormat)
+    from PyQt6.QtGui import (QBrush, QColor, QFont, QIcon, QPalette,
+                             QSyntaxHighlighter, QTextCharFormat)
     from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
                                  QPushButton, QSplitter, QTabWidget,
@@ -84,6 +99,43 @@ def _gui_excepthook(etype, value, tb):
 
 
 sys.excepthook = _gui_excepthook
+
+
+# Farben ans System-Theme angepasst (hell/dunkel) — in main() gesetzt.
+SCHEME = {
+    "text": "#333333", "agent_text": "#0f4c5c", "user": "#1a4d8f",
+    "system": "#666666", "header": "#666666", "error": "#c62828",
+    "warn": "#b26a00", "success": "#2e7d32", "pygments": "friendly",
+    "hl_keyword": "#0033b3", "hl_type": "#7d3fa3", "hl_string": "#a31515",
+    "hl_number": "#098658", "hl_comment": "#6a9955", "hl_preproc": "#7d5d00",
+}
+
+
+def farbschema():
+    app = QApplication.instance()
+    if app is None:
+        return SCHEME
+    hell = app.palette().color(QPalette.ColorRole.Window).lightness() > 127
+    if hell:
+        SCHEME.update({
+            "text": "#333333", "agent_text": "#0f4c5c", "user": "#1a4d8f",
+            "system": "#666666", "header": "#666666", "error": "#c62828",
+            "warn": "#b26a00", "success": "#2e7d32", "pygments": "friendly",
+            "hl_keyword": "#0033b3", "hl_type": "#7d3fa3",
+            "hl_string": "#a31515", "hl_number": "#098658",
+            "hl_comment": "#6a9955", "hl_preproc": "#7d5d00",
+        })
+    else:
+        SCHEME.update({
+            "text": "#e8eaed", "agent_text": "#c9e3f5", "user": "#8ab4f8",
+            "system": "#9aa0a6", "header": "#9aa0a6", "error": "#ff8a80",
+            "warn": "#ffb74d", "success": "#81c784", "pygments": "monokai",
+            "hl_keyword": "#569cd6", "hl_type": "#4ec9b0",
+            "hl_string": "#ce9178", "hl_number": "#b5cea8",
+            "hl_comment": "#6a9955", "hl_preproc": "#c586c0",
+        })
+    return SCHEME
+
 
 
 def strip_ansi(text):
@@ -132,11 +184,11 @@ def lesson_title(lesson_dir):
 
 def console_color(line):
     if "error:" in line or "FEHLGESCHLAGEN" in line or "✘" in line:
-        return "#c62828"
+        return SCHEME["error"]
     if "warning:" in line:
-        return "#b26a00"
+        return SCHEME["warn"]
     if "✔" in line or "BESTANDEN" in line:
-        return "#2e7d32"
+        return SCHEME["success"]
     return None
 
 
@@ -165,15 +217,16 @@ class CppHighlighter(QSyntaxHighlighter):
             return f
 
         self.rules = [
-            (QRegularExpression(r"^\s*#[^\n]*"), fmt("#7d5d00")),
-            (QRegularExpression(r"\b(?:%s)\b" % self.KEYWORDS), fmt("#0033b3", bold=True)),
-            (QRegularExpression(r"\b(?:%s)\b" % self.TYPES), fmt("#7d3fa3")),
-            (QRegularExpression(r'"(?:[^"\\]|\\.)*"'), fmt("#a31515")),
-            (QRegularExpression(r"'(?:[^'\\]|\\.)*'"), fmt("#a31515")),
-            (QRegularExpression(r"\b\d+(?:\.\d+)?f?\b"), fmt("#098658")),
-            (QRegularExpression(r"//[^\n]*"), fmt("#6a9955", italic=True)),
+            (QRegularExpression(r"^\s*#[^\n]*"), fmt(SCHEME["hl_preproc"])),
+            (QRegularExpression(r"\b(?:%s)\b" % self.KEYWORDS),
+             fmt(SCHEME["hl_keyword"], bold=True)),
+            (QRegularExpression(r"\b(?:%s)\b" % self.TYPES), fmt(SCHEME["hl_type"])),
+            (QRegularExpression(r'"(?:[^"\\]|\\.)*"'), fmt(SCHEME["hl_string"])),
+            (QRegularExpression(r"'(?:[^'\\]|\\.)*'"), fmt(SCHEME["hl_string"])),
+            (QRegularExpression(r"\b\d+(?:\.\d+)?f?\b"), fmt(SCHEME["hl_number"])),
+            (QRegularExpression(r"//[^\n]*"), fmt(SCHEME["hl_comment"], italic=True)),
         ]
-        self.comment_fmt = fmt("#6a9955", italic=True)
+        self.comment_fmt = fmt(SCHEME["hl_comment"], italic=True)
         self.re_start = QRegularExpression(r"/\*")
         self.re_end = QRegularExpression(r"\*/")
 
@@ -297,21 +350,22 @@ class Chat(QTextBrowser):
         for kind, text in self._entries:
             if kind == "user":
                 esc = html.escape(text).replace("\n", "<br>")
-                parts.append(f'<div style="color:#1a4d8f;margin:10px 0 2px 0">'
-                             f'<b>Du:</b> {esc}</div>')
+                parts.append(f'<div style="color:{SCHEME["user"]};'
+                             f'margin:10px 0 2px 0"><b>Du:</b> {esc}</div>')
             elif kind == "agent_live":
-                parts.append(f'<div style="color:#0f4c5c;margin:6px 0;'
-                             f'white-space:pre-wrap">{html.escape(text)}</div>')
+                parts.append(f'<div style="color:{SCHEME["agent_text"]};'
+                             f'margin:6px 0;white-space:pre-wrap">'
+                             f'{html.escape(text)}</div>')
             elif kind == "agent":
-                parts.append('<div style="color:#666666;margin:10px 0 2px 0">'
-                             '🤖 Agent</div>')
-                parts.append(f'<div style="color:#0f4c5c;margin:0 0 14px 0">'
-                             f'{md_chat_html(text)}</div>')
+                parts.append(f'<div style="color:{SCHEME["header"]};'
+                             f'margin:10px 0 2px 0">🤖 Agent</div>')
+                parts.append(f'<div style="color:{SCHEME["agent_text"]};'
+                             f'margin:0 0 14px 0">{md_chat_html(text)}</div>')
             elif kind == "system":
-                parts.append(f'<div style="color:#666666;margin:2px 0">'
+                parts.append(f'<div style="color:{SCHEME["system"]};margin:2px 0">'
                              f'{html.escape(text)}</div>')
             elif kind == "error":
-                parts.append(f'<div style="color:#c62828;margin:2px 0">'
+                parts.append(f'<div style="color:{SCHEME["error"]};margin:2px 0">'
                              f'{html.escape(text)}</div>')
         self.setHtml("".join(parts))
         sb = self.verticalScrollBar()
@@ -352,7 +406,6 @@ class ConfigDialog(QDialog):
         self.model.setCurrentText(current_model)
         v.addWidget(self.model)
         self.models_status = QLabel("Modelle werden geladen …")
-        self.models_status.setStyleSheet("color:#666666;")
         v.addWidget(self.models_status)
 
         v.addWidget(QLabel("Pre-Prompt — Vorgabe für jede Agent-Antwort:"))
@@ -394,7 +447,7 @@ class ConfigDialog(QDialog):
             "`opencode auth login` — die App nutzt automatisch die dort\n"
             "gespeicherten Schlüssel. Modell-Liste kommt von `opencode models`.")
         hint.setWordWrap(True)
-        hint.setStyleSheet("color:#666666;")
+        hint.setStyleSheet("")
         v.addWidget(hint)
 
         self.fetch_models()
@@ -405,7 +458,7 @@ class ConfigDialog(QDialog):
         self._models_proc.setWorkingDirectory(ROOT)
         self._models_proc.finished.connect(self._models_done)
         self._models_proc.errorOccurred.connect(self._models_error)
-        self._models_proc.start("opencode", ["models"])
+        self._models_proc.start(OPENCODE, ["models"])
         QTimer.singleShot(60000, self._models_timeout)
 
     def _models_free(self):
@@ -453,7 +506,7 @@ class ConfigDialog(QDialog):
         self._version_proc = QProcess(self)
         self._version_proc.finished.connect(self._version_done)
         self._version_proc.errorOccurred.connect(self._version_error)
-        self._version_proc.start("opencode", ["--version"])
+        self._version_proc.start(OPENCODE, ["--version"])
         QTimer.singleShot(15000, self._version_timeout)
 
     def _version_free(self):
@@ -499,7 +552,7 @@ class ConfigDialog(QDialog):
         self._test_proc.setWorkingDirectory(ROOT)
         self._test_proc.finished.connect(self._test_done)
         self._test_proc.errorOccurred.connect(self._test_error)
-        self._test_proc.start("opencode", ["run", "--standalone", "-m", model,
+        self._test_proc.start(OPENCODE, ["run", "--standalone", "-m", model,
                                            "-s", "ses_trainer_config_test",
                                            "--auto", "Antworte mit genau: OK"])
         self._test_proc.closeWriteChannel()   # stdin schließen — sonst wartet opencode
@@ -583,8 +636,6 @@ class MainWindow(QMainWindow):
         self.btn_run = QPushButton("▶ Starten")
         self.btn_update = QPushButton("🔄 Updates")
         self.btn_update.setToolTip("Neue Aufgaben von GitHub holen (./trainer update)")
-        self.test_combo = QComboBox()
-        self.test_combo.setToolTip("Testfall, der beim Starten als Eingabe benutzt wird")
         for w in (self.btn_build, self.btn_test, self.btn_run):
             w.setEnabled(False)
         self.btn_build.clicked.connect(self.do_build)
@@ -595,9 +646,7 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.btn_run)
         bar.addWidget(self.btn_test)
         bar.addWidget(self.btn_update)
-        bar.addWidget(QLabel("Testfall:"))
-        bar.addWidget(self.test_combo, 1)
-        bar.addStretch(0)
+        bar.addStretch(1)
         self.btn_cheat = QPushButton("❓ Cheatsheet")
         self.btn_cheat.setEnabled(False)
         self.btn_cheat.clicked.connect(self.open_cheatsheet)
@@ -611,7 +660,17 @@ class MainWindow(QMainWindow):
 
         self.bottom = QTabWidget()
         self.console = Console()
-        self.bottom.addTab(self.console, "Konsole")
+        self.console_input = QLineEdit()
+        self.console_input.setPlaceholderText(
+            "Eingabe an das laufende Programm … (Enter = senden)")
+        self.console_input.setEnabled(False)
+        self.console_input.returnPressed.connect(self.send_console_input)
+        console_page = QWidget()
+        cl = QVBoxLayout(console_page)
+        cl.setContentsMargins(0, 0, 0, 0)
+        cl.addWidget(self.console, 1)
+        cl.addWidget(self.console_input)
+        self.bottom.addTab(console_page, "Konsole")
         self.bottom.addTab(self.build_agent_panel(), "Agent")
         btn_clear_view = QPushButton("🧹")
         btn_clear_view.setFixedWidth(34)
@@ -709,11 +768,7 @@ class MainWindow(QMainWindow):
         self.task_title.setText(rel)
         self.task_browser.setHtml(md_html(readme))
 
-        # Testfälle
-        self.test_combo.clear()
-        for t in sorted(glob.glob(os.path.join(ldir, "tests", "*.in"))):
-            self.test_combo.addItem(os.path.basename(t)[:-3], t)
-        self.btn_run.setEnabled(self.test_combo.count() > 0)
+        self.btn_run.setEnabled(True)
         self.btn_build.setEnabled(True)
         self.btn_test.setEnabled(True)
         self.btn_cheat.setEnabled(True)
@@ -768,10 +823,10 @@ class MainWindow(QMainWindow):
                 if rel in self.progress:
                     solved += 1
                     litem.setText(0, "✔ " + title)
-                    litem.setForeground(0, QBrush(QColor("#2e7d32")))
+                    litem.setForeground(0, QBrush(QColor(SCHEME["success"])))
                 else:
                     litem.setText(0, title)
-                    litem.setForeground(0, QBrush(QColor("#333333")))
+                    litem.setForeground(0, QBrush(QColor(SCHEME["text"])))
         self.tree.setHeaderLabels([f"Aufgaben — {solved}/{total} gelöst"])
 
     # ------------------------------------------------------------ Prozesse
@@ -779,11 +834,11 @@ class MainWindow(QMainWindow):
     def set_busy(self, busy):
         for b in (self.btn_build, self.btn_test, self.btn_run, self.btn_update):
             b.setEnabled(not busy)
-        self.test_combo.setEnabled(not busy)
+        self.console_input.setEnabled(busy)
         self.agent_send_btn.setEnabled(self.agent_proc is None and not busy)
 
     def run_process(self, cmd, kind="build", lesson=None, stdin_text=None,
-                    header=None):
+                    header=None, interactive=False):
         if self.proc is not None:
             return
         self.save_all()
@@ -799,8 +854,12 @@ class MainWindow(QMainWindow):
         self.proc.finished.connect(self._proc_finished)
         self.set_busy(True)
         self.proc.start(cmd[0], cmd[1:])
-        if stdin_text is not None:
+        if interactive:
+            pass   # stdin bleibt offen — die Eingabezeile unten füttert das Programm
+        elif stdin_text is not None:
             self.proc.write(stdin_text.encode("utf-8"))
+            self.proc.closeWriteChannel()
+        else:
             self.proc.closeWriteChannel()
 
     def _proc_stdout(self):
@@ -843,6 +902,15 @@ class MainWindow(QMainWindow):
                 self.console.write_line("🎉 Alle Tests bestanden!",
                                         color="#2e7d32")
 
+    def send_console_input(self):
+        """Zeile aus der Eingabezeile an das laufende Programm weiterreichen."""
+        line = self.console_input.text()
+        self.console_input.clear()
+        if self.proc is None or not line:
+            return
+        self.console.write_line("> " + line, color=SCHEME["user"])
+        self.proc.write((line + "\n").encode("utf-8"))
+
     def do_build(self):
         self.run_process([TRAINER, "build", self.current_lesson], kind="build",
                          lesson=self.current_lesson,
@@ -858,19 +926,13 @@ class MainWindow(QMainWindow):
                          header="\n== Updates von GitHub holen ==")
 
     def do_run(self):
-        test_file = self.test_combo.currentData()
-        if not test_file:
-            return
         bin_path = os.path.join(LEKTIONEN_DIR, self.current_lesson, "build", "app")
-        with open(test_file, encoding="utf-8") as f:
-            stdin_text = f.read()
         cmd = ["/bin/bash", "-c", " ".join([
             shlex.quote(TRAINER), "build", shlex.quote(self.current_lesson),
-            "&&", shlex.quote(bin_path), "<", shlex.quote(test_file),
-        ])]
+            "&&", shlex.quote(bin_path)])]
         self.run_process(cmd, kind="run", lesson=self.current_lesson,
-                         stdin_text=stdin_text,
-                         header=f"\n== Starten (Testfall {os.path.basename(test_file)}) ==")
+                         interactive=True,
+                         header="\n== Starten (interaktiv — Eingaben unten tippen) ==")
 
     # ------------------------------------------------------------ Agent
 

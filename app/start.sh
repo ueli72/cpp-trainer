@@ -5,6 +5,10 @@
 set -u
 cd "$(dirname "$0")"
 
+# opencode liegt oft in ~/.opencode/bin — bei Start per Desktop-Icon ist
+# der PATH sonst zu kurz (kein Shell-Profil wird geladen).
+export PATH="$HOME/.opencode/bin:$PATH"
+
 OKAY() { "$1" -c "import PyQt6, markdown" 2>/dev/null; }
 
 PY="python3"

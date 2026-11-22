@@ -35,8 +35,9 @@ gibt `start.sh` den passenden Installationshinweis aus.
 | **Testen** | `./trainer test <lektion>` — ✔ grün / ✘ rot |
 | **Starten** | kompiliert und startet das Programm mit dem im Dropdown gewählten Testfall als Eingabe |
 | **🔄 Updates** | holt neue Aufgaben von GitHub (`./trainer update`) — danach wird der Baum automatisch aktualisiert |
+| **🧹** (Ecke unten) | leert die sichtbare Ansicht (Konsole bzw. Agent-Chat) |
 | **❓ Cheatsheet** | öffnet das Cheatsheet des Themas in einem eigenen Fenster |
-| **Konsole (unten)** | Ausgabe von Kompilieren/Testen/Starten |
+| **Konsole (unten)** | Ausgabe von Kompilieren/Testen/Starten — während ein Programm läuft, kannst du unten Eingaben tippen (Enter = senden), so funktionieren `std::cin`-Programme |
 | **Agent (unten)** | Chat mit OpenCode — siehe unten |
 
 ## Fortschritt
@@ -107,3 +108,15 @@ Lektion, Markdown-Konvertierung, Kompilier-Lauf.
 | „Modelle werden geladen" endet nicht | Läuft `opencode models` im Terminal im Projektordner? Beim ersten Start lädt opencode die Modell-Liste aus dem Netz. |
 | „opencode konnte nicht gestartet werden" | opencode nicht installiert → `./install.sh` (Schritt 3) oder `opencode` einmal im Terminal starten (Ersteinrichtung). |
 | Agent antwortet mit Usage-Limit-Fehler | Modell-Feld füllen, z. B. `opencode/glm-5.3-flash` (⚙-Dialog). |
+
+## Darstellung
+
+Die Farben passen sich automatisch an das System-Theme an (hell/dunkel) —
+einschließlich Syntax-Highlighting im Editor und im Agent-Chat.
+
+## Desktop-Starter
+
+`./install.sh` legt bei der App-Variante eine Starterdatei an
+(`~/.local/share/applications/cpp-trainer.desktop`, mit Icon) — die App
+lässt sich dann per Doppelklick öffnen. `start.sh` sorgt dabei selbst
+dafür, dass `opencode` gefunden wird.
