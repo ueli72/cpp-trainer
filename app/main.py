@@ -80,7 +80,8 @@ try:
                               QRegularExpression, QSettings)
     from PyQt6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QIcon,
                              QPalette, QSyntaxHighlighter, QTextCharFormat)
-    from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
+    from PyQt6.QtWidgets import (QApplication, QMessageBox, QComboBox,
+                                 QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
                                  QPushButton, QSpinBox, QSplitter, QTabWidget,
                                  QTextBrowser, QTreeWidget, QTreeWidgetItem,
@@ -700,16 +701,21 @@ class MainWindow(QMainWindow):
         self.btn_run = QPushButton("▶ Starten")
         self.btn_update = QPushButton("🔄 Updates")
         self.btn_update.setToolTip("Neue Aufgaben von GitHub holen (./trainer update)")
-        for w in (self.btn_build, self.btn_test, self.btn_run):
+        self.btn_reset = QPushButton("↺ Zurücksetzen")
+        self.btn_reset.setToolTip(
+            "Aufgabe auf den Originalzustand zurücksetzen (Lösung wird verworfen!)")
+        for w in (self.btn_build, self.btn_test, self.btn_run, self.btn_reset):
             w.setEnabled(False)
         self.btn_build.clicked.connect(self.do_build)
         self.btn_test.clicked.connect(self.do_test)
         self.btn_run.clicked.connect(self.do_run)
         self.btn_update.clicked.connect(self.do_update)
+        self.btn_reset.clicked.connect(self.do_reset)
         bar.addWidget(self.btn_build)
         bar.addWidget(self.btn_run)
         bar.addWidget(self.btn_test)
         bar.addWidget(self.btn_update)
+        bar.addWidget(self.btn_reset)
         bar.addStretch(1)
         self.btn_zoom = QPushButton("Aa")
         self.btn_zoom.setToolTip("Schriftgrößen einstellen")
@@ -992,7 +998,8 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ Prozesse
 
     def set_busy(self, busy):
-        for b in (self.btn_build, self.btn_test, self.btn_run, self.btn_update):
+        for b in (self.btn_build, self.btn_test, self.btn_run, self.btn_reset,
+                  self.btn_update):
             b.setEnabled(not busy)
         self.console_input.setEnabled(busy)
         self.agent_send_btn.setEnabled(self.agent_proc is None and not busy)
@@ -1013,6 +1020,7 @@ class MainWindow(QMainWindow):
         self.proc.readyReadStandardError.connect(self._proc_stderr)
         self.proc.finished.connect(self._proc_finished)
         self.set_busy(True)
+        self.bottom.setCurrentIndex(0)   # Ausgaben erscheinen in der Konsole
         self.proc.start(cmd[0], cmd[1:])
         if interactive:
             pass   # stdin bleibt offen — die Eingabezeile unten füttert das Programm
@@ -1047,6 +1055,10 @@ class MainWindow(QMainWindow):
                     and os.path.isdir(os.path.join(LEKTIONEN_DIR, self.current_lesson))):
                 self.load_lesson(self.current_lesson)
 
+        if kind == "reset":
+            self.progress = self._load_progress()
+            self._apply_progress()
+
         # Fortschritt: Testlauf komplett bestanden → Aufgabe abgeschlossen
         if (kind == "test" and lesson and code == 0
                 and "✔" in self.last_output and "✘" not in self.last_output
@@ -1080,6 +1092,21 @@ class MainWindow(QMainWindow):
         self.run_process([TRAINER, "test", self.current_lesson], kind="test",
                          lesson=self.current_lesson,
                          header=f"\n== Testen: {self.current_lesson} ==")
+
+    def do_reset(self):
+        if not self.current_lesson:
+            return
+        antwort = QMessageBox.question(
+            self, "Aufgabe zurücksetzen",
+            "Die bearbeiteten Dateien dieser Lektion werden verworfen und auf "
+            "den Originalzustand zurückgesetzt.\n\nFortfahren?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel)
+        if antwort != QMessageBox.StandardButton.Yes:
+            return
+        self.run_process([TRAINER, "reset", self.current_lesson, "--ja"],
+                         kind="reset", lesson=self.current_lesson,
+                         header=f"\n== Zurücksetzen: {self.current_lesson} ==")
 
     def do_update(self):
         self.run_process([TRAINER, "update"], kind="update",

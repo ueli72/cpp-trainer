@@ -9,6 +9,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LEKTIONEN_DIR="$ROOT/lektionen"
+PROGRESS_FILE="$ROOT/fortschritt.json"
 VORLAGE_DIR="$ROOT/vorlage"
 
 CXX="${CXX:-g++}"
@@ -35,6 +36,7 @@ Benutzung:
   ./trainer run <lektion>         Kompilieren und manuell ausführen
   ./trainer test <lektion>        Kompilieren und automatische Tests ausführen
   ./trainer update                Neue Aufgaben von GitHub holen
+  ./trainer reset <lektion>       Aufgabe auf den Anfang zurücksetzen
   ./trainer all                   Tests für alle Lektionen ausführen
 
 <lektion> kann ein Name, ein Teil davon oder ein Ordner sein, z. B.:
@@ -324,6 +326,56 @@ cmd_update() {
   printf '%sUpdate abgeschlossen.%s\n' "$C_GRUEN" "$C_RESET"
 }
 
+# ------------------------------------------------------------ Zuruecksetzen
+
+cmd_reset() {
+  local lektion="${1:-}"
+  local ohne_frage=false
+  if [ "${2:-}" = "--ja" ]; then ohne_frage=true; fi
+  if [ -z "$lektion" ]; then
+    die "Benutzung: ./trainer reset <lektion> [--ja]"
+  fi
+  if [ ! -d "$ROOT/.git" ]; then
+    die "Zurücksetzen nicht möglich: Dieses Paket wurde ohne git installiert. Abhilfe: distribute-Paket neu entpacken (das Original ist darin enthalten)."
+  fi
+  local ldir
+  ldir=$(resolve_lesson "$lektion")
+  local rel="${ldir#"$LEKTIONEN_DIR/"}"
+
+  # Bestätigung (nur im interaktiven Terminal; die App fragt selbst nach)
+  if [ "$ohne_frage" != true ] && [ -t 0 ]; then
+    printf '%sAchtung: Die bearbeiteten Dateien von %s werden verworfen%s\n' \
+      "$C_GELB" "$rel" "$C_RESET"
+    read -r -p "Wirklich zurücksetzen? [j/N]: " antwort
+    case "$antwort" in
+      j|J|ja|Ja) ;;
+      *) info "abgebrochen — nichts wurde geändert."; return 0 ;;
+    esac
+  fi
+
+  if ! git -C "$ROOT" checkout HEAD -- "lektionen/$rel" 2>/dev/null; then
+    die "Zurücksetzen fehlgeschlagen — die Originaldateien sind nicht im Repository."
+  fi
+
+  # Fortschritts-Markierung der Lektion entfernen (falls python3 vorhanden)
+  if command -v python3 >/dev/null 2>&1 && [ -f "$PROGRESS_FILE" ]; then
+    python3 - "$PROGRESS_FILE" "$rel" <<'PY' 2>/dev/null || true
+import json, sys
+pfad, rel = sys.argv[1], sys.argv[2]
+try:
+    with open(pfad, encoding="utf-8") as f:
+        d = json.load(f)
+    geloest = [x for x in d.get("solved", []) if x != rel]
+    if geloest != d.get("solved"):
+        with open(pfad, "w", encoding="utf-8") as f:
+            json.dump({"solved": geloest}, f, indent=2)
+except (OSError, ValueError):
+    pass
+PY
+  fi
+  printf '%s\u2714 Zurückgesetzt: %s (Originalzustand wiederhergestellt)%s\n' "$C_GRUEN" "$rel" "$C_RESET"
+}
+
 main() {
   local cmd="${1:-help}"
   case "$cmd" in
@@ -333,6 +385,7 @@ main() {
     run)             cmd_run "${2:-}" ;;
     test)            cmd_test "${2:-}" ;;
     update)          cmd_update ;;
+    reset)           cmd_reset "${2:-}" "${3:-}" ;;
     all)             cmd_all ;;
     help|-h|--help)  help ;;
     *) help; echo ""; die "Unbekannter Befehl: $cmd" ;;
