@@ -10,14 +10,16 @@ und Hinweisen, ohne dir die Lösung vorwegzunehmen.
 
 So startest du deine erste Lektion (dauert keine Minute):
 
-1. **Editor öffnen:** VSCodium → *Datei → Ordner öffnen* → diesen Ordner (`c++Trainer`)
-2. **Aufgabe lesen:** `lektionen/01-eingabe/01-hallo-welt/README.md` — dort steht, was zu tun ist
-3. **Lösung schreiben:** dieselbe Datei `main.cpp` öffnen und den Code eintragen
-4. **Testen:** **Strg+Shift+B** drücken (oder unten links den 🧪-Button „Tests")
+1. **App starten:** im Projektordner `./start.sh` (oder per Desktop-Icon, falls installiert)
+2. **Aufgabe wählen:** im Baum links — rechts steht die Aufgabe, in der Mitte der Editor
+3. **Lösung schreiben:** die Datei `main.cpp` bearbeiten und den Code eintragen
+4. **Testen:** 🧪 Testen — die Ausgabe erscheint in der Konsole
    - 🟢 **grün** = alle Tests bestanden → Glückwunsch, weiter zur nächsten Lektion!
    - 🔴 **rot** = es klemmt noch → siehe „Hilfe von der KI" unten
-5. **Ausprobieren:** zwischendurch das Programm selbst starten —
-   ▶-Button „Ausführen" oder im Terminal `./trainer run 01`
+5. **Ausprobieren:** ▶ Starten — Eingaben an das Programm unten in die Konsole tippen
+
+> Lieber im Terminal/VSCodium arbeiten? Alles läuft auch dort:
+> `./trainer test <lektion>` bzw. **Strg+Shift+B** in VSCodium.
 
 > Die Tests prüfen, ob dein Programm **exakt** die geforderte Ausgabe liefert.
 > Schau also genau hin: Groß-/Kleinschreibung, Kommas, Leerzeichen.
@@ -29,9 +31,9 @@ Jede Lektion funktioniert immer gleich:
 ```text
 README.md der Lektion lesen          (die Aufgabe)
         ↓
-main.cpp bearbeiten                  (dein Code, in VSCodium)
+main.cpp bearbeiten                  (in der App oder im Editor)
         ↓
-./trainer test <lektion>             (oder Strg+Shift-B / 🧪-Button)
+🧪 Testen                            (App-Button oder ./trainer test <lektion>)
         ↓                        ↓
       🟢 fertig              🔴 verbessern → hinweise holen → nochmal
 ```

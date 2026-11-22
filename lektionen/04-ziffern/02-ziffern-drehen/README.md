@@ -32,6 +32,6 @@ Gib die Zahl mit **umgedrehten Ziffernfolge** aus. Führende Nullen fallen dabei
 
 ## So testest du
 
-- `./trainer test ziffern/02` (oder in VSCodium Strg+Shift-B bzw. der 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
+- `./trainer test ziffern/02` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
 - `./trainer run ziffern/02` — das Programm selbst ausprobieren
-- Bei roten Tests: OpenCode fragen, z. B. „Warum schlägt mein Test fehl?“
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

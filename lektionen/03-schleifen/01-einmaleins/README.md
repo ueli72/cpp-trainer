@@ -38,6 +38,6 @@ Gib das kleine Einmaleins zu `n` aus — **10 Zeilen**, von `1` bis `10`. Jede Z
 
 ## So testest du
 
-- `./trainer test schleifen/01` (oder in VSCodium Strg+Shift-B bzw. der 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
+- `./trainer test schleifen/01` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
 - `./trainer run schleifen/01` — das Programm selbst ausprobieren
-- Bei roten Tests: OpenCode fragen, z. B. „Warum schlägt mein Test fehl?“
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

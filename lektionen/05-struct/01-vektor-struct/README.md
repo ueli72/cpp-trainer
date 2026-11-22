@@ -62,6 +62,6 @@ Die Formeln kennst du aus Eingabe 04:
 
 ## So testest du
 
-- `./trainer test struct/01` (oder in VSCodium Strg+Shift-B bzw. der 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
+- `./trainer test struct/01` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
 - `./trainer run struct/01` — das Programm selbst ausprobieren
-- Bei roten Tests: OpenCode fragen, z. B. „Warum schlägt mein Test fehl?“
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

@@ -32,6 +32,6 @@ Durchschnitt: 2.00
 
 ## So testest du
 
-- `./trainer test eingabe/03` (oder in VSCodium Strg+Shift-B bzw. der 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
+- `./trainer test eingabe/03` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
 - `./trainer run eingabe/03` — das Programm selbst ausprobieren
-- Bei roten Tests: OpenCode fragen, z. B. „Warum schlägt mein Test fehl?“
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

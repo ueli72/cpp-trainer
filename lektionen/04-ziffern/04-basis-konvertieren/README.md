@@ -35,6 +35,6 @@ Hinweis zur Technik wie im Original: Wiederholt `value % base` (letzte Ziffer) u
 
 ## So testest du
 
-- `./trainer test ziffern/04` (oder in VSCodium Strg+Shift-B bzw. der 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
+- `./trainer test ziffern/04` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
 - `./trainer run ziffern/04` — das Programm selbst ausprobieren
-- Bei roten Tests: OpenCode fragen, z. B. „Warum schlägt mein Test fehl?“
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen

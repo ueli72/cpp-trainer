@@ -45,6 +45,6 @@ Beispiel `10 2`: gibZiffernAus(10) → ruft gibZiffernAus(5) → ruft gibZiffern
 
 ## So testest du
 
-- `./trainer test rekursion/03rekursion/03` (oder in VSCodium Strg+Shift-B bzw. der 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
+- `./trainer test rekursion/03rekursion/03` (in der App: 🧪-Button) — die Testfälle liegen sichtbar in `tests/`
 - `./trainer run rekursion/03rekursion/03` — das Programm selbst ausprobieren
-- Bei roten Tests: OpenCode fragen, z. B. „Warum schlägt mein Test fehl?“
+- Bei roten Tests: **Agent-Tab** („Warum schlägt mein Test fehl?“) oder OpenCode im Terminal fragen
