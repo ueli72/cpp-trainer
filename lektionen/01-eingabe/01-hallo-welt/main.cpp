@@ -6,7 +6,6 @@ int main() {
     // std::cout ist die Konsole. Mit << schickst du Dinge hinein.
     // "\n" beendet die Zeile.
     std::cout << "Hallo, Welt!" << "\n";
-    test
 
     // TODO 1: Lies zusätzlich einen Namen ein. Werkzeug:
     //   std::string name;    // eine Text-Variable (aus <string>)
