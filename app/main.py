@@ -79,8 +79,8 @@ try:
     from PyQt6.QtCore import (QEvent, QPoint, QRect, QSize, Qt, QTimer,
                               QProcess, QRegularExpression, QSettings)
     from PyQt6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QIcon,
-                             QPainter, QPalette, QSyntaxHighlighter,
-                             QTextCharFormat)
+                             QKeySequence, QPainter, QPalette, QShortcut,
+                             QSyntaxHighlighter, QTextCharFormat)
     from PyQt6.QtWidgets import (QApplication, QMessageBox, QComboBox,
                                  QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
@@ -781,6 +781,11 @@ class MainWindow(QMainWindow):
         self.btn_run = QPushButton("▶ Starten")
         self.btn_update = QPushButton("🔄 Updates")
         self.btn_update.setToolTip("Neue Aufgaben von GitHub holen (./trainer update)")
+        self.btn_save = QPushButton("💾 Speichern")
+        self.btn_save.setToolTip(
+            "Alle geänderten Dateien speichern (Strg+S) — aktiv, sobald etwas "
+            "ungespeichert ist")
+        self.btn_save.setEnabled(False)
         self.btn_reset = QPushButton("↺ Zurücksetzen")
         self.btn_reset.setToolTip(
             "Aufgabe auf den Originalzustand zurücksetzen (Lösung wird verworfen!)")
@@ -790,10 +795,13 @@ class MainWindow(QMainWindow):
         self.btn_test.clicked.connect(self.do_test)
         self.btn_run.clicked.connect(self.do_run)
         self.btn_update.clicked.connect(self.do_update)
+        self.btn_save.clicked.connect(self.do_save)
+        QShortcut(QKeySequence.StandardKey.Save, self).activated.connect(self.do_save)
         self.btn_reset.clicked.connect(self.do_reset)
         bar.addWidget(self.btn_build)
         bar.addWidget(self.btn_run)
         bar.addWidget(self.btn_test)
+        bar.addWidget(self.btn_save)
         bar.addWidget(self.btn_update)
         bar.addWidget(self.btn_reset)
         bar.addStretch(1)
@@ -948,6 +956,8 @@ class MainWindow(QMainWindow):
             except OSError as e:
                 editor.setPlainText(f"(Datei konnte nicht gelesen werden: {e})")
             editor.setProperty("path", path)
+            editor.document().setModified(False)
+            editor.document().modificationChanged.connect(self.update_save_button)
             editor.hl = CppHighlighter(editor.document())
             editor.document().setDefaultFont(monospace())
             fm = editor.fontMetrics()
@@ -977,13 +987,20 @@ class MainWindow(QMainWindow):
         else:
             self.agent_chat.clear_chat()
 
+    def update_save_button(self, _modified=False):
+        """💾 aktiv, sobald ein offener Tab ungespeicherte Änderungen hat."""
+        dirty = any(self.tabs.widget(i).document().isModified()
+                    for i in range(self.tabs.count()))
+        self.btn_save.setEnabled(dirty)
+
     def save_all(self):
         for i in range(self.tabs.count()):
             editor = self.tabs.widget(i)
             path = editor.property("path")
-            if path:
+            if path and editor.document().isModified():
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(editor.toPlainText())
+                editor.document().setModified(False)
 
     # ------------------------------------------------------------ Fortschritt
 
@@ -1103,6 +1120,7 @@ class MainWindow(QMainWindow):
         self.proc.finished.connect(self._proc_finished)
         self.set_busy(True)
         self.bottom.setCurrentIndex(0)   # Ausgaben erscheinen in der Konsole
+        self.update_save_button()
         self.proc.start(cmd[0], cmd[1:])
         if interactive:
             pass   # stdin bleibt offen — die Eingabezeile unten füttert das Programm
@@ -1168,6 +1186,12 @@ class MainWindow(QMainWindow):
             return
         self.console.write_line("> " + line, color=SCHEME["user"])
         self.proc.write((line + "\n").encode("utf-8"))
+
+    def do_save(self):
+        if not self.current_lesson:
+            return
+        self.save_all()
+        self.console.write_line("Gespeichert.", color=SCHEME["success"])
 
     def do_build(self):
         self.run_process([TRAINER, "build", self.current_lesson], kind="build",
