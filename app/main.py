@@ -215,6 +215,10 @@ class Console(QPlainTextEdit):
         self.setMaximumBlockCount(5000)
         self._buf = ""
 
+    def clear_output(self):
+        self.clear()
+        self._buf = ""
+
     def write(self, text):
         self._buf += text
         while "\n" in self._buf:
@@ -609,6 +613,11 @@ class MainWindow(QMainWindow):
         self.console = Console()
         self.bottom.addTab(self.console, "Konsole")
         self.bottom.addTab(self.build_agent_panel(), "Agent")
+        btn_clear_view = QPushButton("🧹")
+        btn_clear_view.setFixedWidth(34)
+        btn_clear_view.setToolTip("Sichtbare Ansicht leeren (Konsole oder Agent-Chat)")
+        btn_clear_view.clicked.connect(self.clear_current_view)
+        self.bottom.setCornerWidget(btn_clear_view, Qt.Corner.TopRightCorner)
         center_layout.addWidget(self.bottom, 1)
 
         vsplit = QSplitter(Qt.Orientation.Vertical)
@@ -711,6 +720,12 @@ class MainWindow(QMainWindow):
         self.console.write_line(f"== Lektion geladen: {rel} ==")
 
     # ------------------------------------------------------------ Dateien
+
+    def clear_current_view(self):
+        if self.bottom.currentIndex() == 0:
+            self.console.clear_output()
+        else:
+            self.agent_chat.clear_chat()
 
     def save_all(self):
         for i in range(self.tabs.count()):
