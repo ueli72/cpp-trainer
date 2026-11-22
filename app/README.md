@@ -115,6 +115,11 @@ Lektion, Markdown-Konvertierung, Kompilier-Lauf.
 Die Farben passen sich automatisch an das System-Theme an (hell/dunkel) —
 einschließlich Syntax-Highlighting im Editor und im Agent-Chat.
 
+Die **Fensterkonfiguration** (Größe, Position, Splitter, maximiert) wird
+beim Schließen gespeichert und beim nächsten Start wiederhergestellt. Ist
+der Bildschirm kleiner als die gespeicherte Konfiguration, passt sich das
+Fenster automatisch an (Fallback) — nichts hängt außerhalb des Bildrands.
+
 ## Desktop-Starter
 
 `./install.sh` legt bei der App-Variante eine Starterdatei an

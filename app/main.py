@@ -76,10 +76,10 @@ def fail(msg):
 
 
 try:
-    from PyQt6.QtCore import (QEvent, Qt, QTimer, QProcess,
+    from PyQt6.QtCore import (QEvent, QPoint, QRect, Qt, QTimer, QProcess,
                               QRegularExpression, QSettings)
-    from PyQt6.QtGui import (QBrush, QColor, QFont, QIcon, QPalette,
-                             QSyntaxHighlighter, QTextCharFormat)
+    from PyQt6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QIcon,
+                             QPalette, QSyntaxHighlighter, QTextCharFormat)
     from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
                                  QPushButton, QSpinBox, QSplitter, QTabWidget,
@@ -747,11 +747,11 @@ class MainWindow(QMainWindow):
         self.bottom.setCornerWidget(btn_clear_view, Qt.Corner.TopRightCorner)
         center_layout.addWidget(self.bottom, 1)
 
-        vsplit = QSplitter(Qt.Orientation.Vertical)
-        vsplit.addWidget(self.tabs)
-        vsplit.addWidget(self.bottom)
-        vsplit.setSizes([560, 280])
-        center_layout.addWidget(vsplit, 1)
+        self.split_vert = QSplitter(Qt.Orientation.Vertical)
+        self.split_vert.addWidget(self.tabs)
+        self.split_vert.addWidget(self.bottom)
+        self.split_vert.setSizes([560, 280])
+        center_layout.addWidget(self.split_vert, 1)
 
         # --- Aufgabe (rechts)
         self.task_title = QLabel("")
@@ -764,15 +764,55 @@ class MainWindow(QMainWindow):
         task_layout.addWidget(self.task_title)
         task_layout.addWidget(self.task_browser, 1)
 
-        split = QSplitter(Qt.Orientation.Horizontal)
-        split.addWidget(self.tree)
-        split.addWidget(center)
-        split.addWidget(task_widget)
-        split.setSizes([300, 800, 330])
-        layout.addWidget(split)
+        self.split_main = QSplitter(Qt.Orientation.Horizontal)
+        self.split_main.addWidget(self.tree)
+        self.split_main.addWidget(center)
+        self.split_main.addWidget(task_widget)
+        self.split_main.setSizes([300, 800, 330])
+        layout.addWidget(self.split_main)
 
         self.cheat_windows = []
+        self._fenster_wiederherstellen()
         self.apply_all_sizes()
+
+    # ------------------------------------------------------------ Fenster
+
+    def _fenster_wiederherstellen(self):
+        """Gespeicherte Größe/Position/Splitter laden — mit Fallback, wenn
+        der aktuelle Bildschirm zu klein für die gespeicherte Konfig ist."""
+        geo = self.settings.value("win/geometry")
+        if geo:
+            self.restoreGeometry(geo)
+        splitter = self.settings.value("win/splitter")
+        if splitter:
+            self.split_main.restoreState(splitter)
+        vsplitter = self.settings.value("win/vsplitter")
+        if vsplitter:
+            self.split_vert.restoreState(vsplitter)
+        self._an_bildschirm_anpassen()
+
+    def _an_bildschirm_anpassen(self):
+        screen = self.screen() or QGuiApplication.primaryScreen()
+        avail = screen.availableGeometry()
+        # Zu groß für den Bildschirm → auf die verfügbare Fläche verkleinern
+        if self.width() > avail.width() or self.height() > avail.height():
+            self.resize(min(self.width(), avail.width()),
+                        min(self.height(), avail.height()))
+        # Position außerhalb (z. B. zweiter Bildschirm weggefallen) → zurückholen
+        if not avail.contains(self.frameGeometry().topLeft()):
+            self.move(avail.topLeft())
+
+    def _fenster_speichern(self):
+        self.settings.setValue("win/geometry", self.saveGeometry())
+        self.settings.setValue("win/splitter", self.split_main.saveState())
+        self.settings.setValue("win/vsplitter", self.split_vert.saveState())
+        self.settings.setValue("win/maximized", self.isMaximized())
+
+    def closeEvent(self, event):
+        self._fenster_speichern()
+        super().closeEvent(event)
+
+    # ------------------------------------------------------------ Baum
 
     # ------------------------------------------------------------ Baum
 
@@ -1307,9 +1347,13 @@ def main():
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
     w = MainWindow()
+    maximiert = w.settings.value("win/maximized", False, type=bool)
     if "--smoke" in sys.argv:
         return smoke(w)
-    w.show()
+    if maximiert:
+        w.showMaximized()
+    else:
+        w.show()
     return app.exec()
 
 
