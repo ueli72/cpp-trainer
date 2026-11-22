@@ -34,6 +34,7 @@ gibt `start.sh` den passenden Installationshinweis aus.
 | **Kompilieren** | `./trainer build <lektion>` — Fehler landen rot in der Konsole |
 | **Testen** | `./trainer test <lektion>` — ✔ grün / ✘ rot |
 | **Starten** | kompiliert und startet das Programm mit dem im Dropdown gewählten Testfall als Eingabe |
+| **🔄 Updates** | holt neue Aufgaben von GitHub (`./trainer update`) — danach wird der Baum automatisch aktualisiert |
 | **❓ Cheatsheet** | öffnet das Cheatsheet des Themas in einem eigenen Fenster |
 | **Konsole (unten)** | Ausgabe von Kompilieren/Testen/Starten |
 | **Agent (unten)** | Chat mit OpenCode — siehe unten |

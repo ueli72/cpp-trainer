@@ -34,6 +34,7 @@ Benutzung:
   ./trainer build <lektion>       Nur kompilieren
   ./trainer run <lektion>         Kompilieren und manuell ausführen
   ./trainer test <lektion>        Kompilieren und automatische Tests ausführen
+  ./trainer update                Neue Aufgaben von GitHub holen
   ./trainer all                   Tests für alle Lektionen ausführen
 
 <lektion> kann ein Name, ein Teil davon oder ein Ordner sein, z. B.:
@@ -285,6 +286,44 @@ cmd_all() {
   exit "$overall"
 }
 
+# ------------------------------------------------------------ Updates
+
+cmd_update() {
+  if [ ! -d "$ROOT/.git" ]; then
+    die "Update nicht moeglich: Dieses Paket wurde ohne git installiert (distribute-Archiv). Neu beziehen: https://github.com/ueli72/cpp-trainer"
+  fi
+  printf '%s== Updates suchen ==%s\n' "$C_FETT" "$C_RESET"
+  if ! git -C "$ROOT" fetch origin 2>/dev/null; then
+    printf '%sKeine Verbindung zu GitHub - Internetverbindung pruefen und erneut versuchen.%s\n' "$C_GRAU" "$C_RESET"
+    return 0
+  fi
+  local branch
+  branch=$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+  local hinterher
+  hinterher=$(git -C "$ROOT" rev-list "HEAD..origin/$branch" --count 2>/dev/null || echo "?")
+  if [ "$hinterher" = "0" ]; then
+    printf '%sAlles aktuell - keine Updates.%s\n' "$C_GRUEN" "$C_RESET"
+    return 0
+  fi
+  printf '%sNeue Version: %s neue(r) Commit(s):%s\n' "$C_FETT" "$hinterher" "$C_RESET"
+  git -C "$ROOT" log "HEAD..origin/$branch" --oneline 2>/dev/null | sed 's/^/  /'
+  local vorher nachher neue
+  vorher=$(find "$LEKTIONEN_DIR" -mindepth 2 -maxdepth 2 -type d | sort)
+  if ! git -C "$ROOT" merge --ff-only "origin/$branch" 2>/dev/null; then
+    printf '%sUpdate abgebrochen: Lokale Aenderungen (z. B. deine Loesungen) kollidieren\n' "$C_GELB"
+    printf '%smit neuen Dateien. Deine Loesungen bleiben unberuehrt.%s\n' "" "$C_RESET"
+    printf '%sTipp: git stash && git merge --ff-only && git stash pop%s\n' "$C_GRAU" "$C_RESET"
+    return 1
+  fi
+  nachher=$(find "$LEKTIONEN_DIR" -mindepth 2 -maxdepth 2 -type d | sort)
+  neue=$(comm -13 <(printf '%s\n' "$vorher") <(printf '%s\n' "$nachher") | sed 's|lektionen/||')
+  if [ -n "$neue" ]; then
+    printf '%sNeue Aufgaben:%s\n' "$C_GRUEN" "$C_RESET"
+    printf '%s\n' "$neue" | sed 's/^/  /'
+  fi
+  printf '%sUpdate abgeschlossen.%s\n' "$C_GRUEN" "$C_RESET"
+}
+
 main() {
   local cmd="${1:-help}"
   case "$cmd" in
@@ -293,6 +332,7 @@ main() {
     build)           cmd_build "${2:-}" ;;
     run)             cmd_run "${2:-}" ;;
     test)            cmd_test "${2:-}" ;;
+    update)          cmd_update ;;
     all)             cmd_all ;;
     help|-h|--help)  help ;;
     *) help; echo ""; die "Unbekannter Befehl: $cmd" ;;

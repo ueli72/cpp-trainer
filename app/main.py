@@ -573,6 +573,8 @@ class MainWindow(QMainWindow):
         self.btn_build = QPushButton("🛠 Kompilieren")
         self.btn_test = QPushButton("🧪 Testen")
         self.btn_run = QPushButton("▶ Starten")
+        self.btn_update = QPushButton("🔄 Updates")
+        self.btn_update.setToolTip("Neue Aufgaben von GitHub holen (./trainer update)")
         self.test_combo = QComboBox()
         self.test_combo.setToolTip("Testfall, der beim Starten als Eingabe benutzt wird")
         for w in (self.btn_build, self.btn_test, self.btn_run):
@@ -580,9 +582,11 @@ class MainWindow(QMainWindow):
         self.btn_build.clicked.connect(self.do_build)
         self.btn_test.clicked.connect(self.do_test)
         self.btn_run.clicked.connect(self.do_run)
+        self.btn_update.clicked.connect(self.do_update)
         bar.addWidget(self.btn_build)
         bar.addWidget(self.btn_run)
         bar.addWidget(self.btn_test)
+        bar.addWidget(self.btn_update)
         bar.addWidget(QLabel("Testfall:"))
         bar.addWidget(self.test_combo, 1)
         bar.addStretch(0)
@@ -754,7 +758,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ Prozesse
 
     def set_busy(self, busy):
-        for b in (self.btn_build, self.btn_test, self.btn_run):
+        for b in (self.btn_build, self.btn_test, self.btn_run, self.btn_update):
             b.setEnabled(not busy)
         self.test_combo.setEnabled(not busy)
         self.agent_send_btn.setEnabled(self.agent_proc is None and not busy)
@@ -799,6 +803,12 @@ class MainWindow(QMainWindow):
         self.proc = None
         self.set_busy(False)
 
+        if kind == "update":
+            self.reload_tree()
+            if (self.current_lesson
+                    and os.path.isdir(os.path.join(LEKTIONEN_DIR, self.current_lesson))):
+                self.load_lesson(self.current_lesson)
+
         # Fortschritt: Testlauf komplett bestanden → Aufgabe abgeschlossen
         if (kind == "test" and lesson and code == 0
                 and "✔" in self.last_output and "✘" not in self.last_output
@@ -823,6 +833,10 @@ class MainWindow(QMainWindow):
         self.run_process([TRAINER, "test", self.current_lesson], kind="test",
                          lesson=self.current_lesson,
                          header=f"\n== Testen: {self.current_lesson} ==")
+
+    def do_update(self):
+        self.run_process([TRAINER, "update"], kind="update",
+                         header="\n== Updates von GitHub holen ==")
 
     def do_run(self):
         test_file = self.test_combo.currentData()

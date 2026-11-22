@@ -43,6 +43,17 @@ cd app && ./start.sh
 
 Das Skript ist idempotent — es kann beliebig oft laufen.
 
+### Updates
+
+Nach dem Klonen genügt im Projektordner:
+
+```bash
+./trainer update
+```
+
+Es holt neue Aufgaben von GitHub (eigene Lösungen bleiben erhalten) und
+listet neue Lektionen auf. Die GUI hat dafür den 🔄-Button.
+
 ## Für Maintainer: Paket neu bauen
 
 Nach Änderungen am Projekt im Projektordner:
