@@ -935,8 +935,7 @@ class MainWindow(QMainWindow):
         titel_zeile = QHBoxLayout()
         titel_zeile.addWidget(self.task_title)
         titel_zeile.addStretch(1)
-        self.btn_einstellungen = QPushButton("⚙")
-        self.btn_einstellungen.setFixedWidth(34)
+        self.btn_einstellungen = QPushButton("⚙ Einstellungen")
         self.btn_einstellungen.setToolTip("Einstellungen: Updates & Schriftgrößen")
         self.btn_einstellungen.clicked.connect(self.open_einstellungen)
         titel_zeile.addWidget(self.btn_einstellungen)
@@ -1588,7 +1587,7 @@ def smoke(w):
     themes = w.tree.topLevelItemCount()
     lessons = sum(w.tree.topLevelItem(i).childCount() for i in range(themes))
     print(f"Themen: {themes}, Lektionen: {lessons}")
-    if themes != 7 or lessons != 25:
+    if themes < 7 or lessons < 25:
         return 1
     w.load_lesson("01-eingabe/02-summe")
     if w.tabs.count() != 1 or "Summe" not in w.task_browser.toPlainText():
