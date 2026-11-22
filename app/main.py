@@ -256,6 +256,24 @@ class CppHighlighter(QSyntaxHighlighter):
                 start = -1
 
 
+# ------------------------------------------------------------- Editor
+
+class CodeEditor(QPlainTextEdit):
+    """Editor mit Auto-Einrückung: Bei Enter bekommt die neue Zeile die
+    Einrückung der vorherigen Zeile — endet diese mit {, eine Stufe extra."""
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            cursor = self.textCursor()
+            zeile = cursor.block().text()
+            einrueck = re.match(r"[ \t]*", zeile).group(0)
+            extra = "    " if zeile.rstrip().endswith("{") else ""
+            cursor.insertText("\n" + einrueck + extra)
+            self.ensureCursorVisible()
+            return
+        super().keyPressEvent(event)
+
+
 # ------------------------------------------------------------- Konsole
 
 class Console(QPlainTextEdit):
@@ -745,7 +763,7 @@ class MainWindow(QMainWindow):
         files.sort(key=lambda p: (os.path.basename(p) != "main.cpp", p))
         self.tabs.clear()
         for path in files:
-            editor = QPlainTextEdit()
+            editor = CodeEditor()
             editor.setFont(monospace())
             try:
                 with open(path, encoding="utf-8") as f:
