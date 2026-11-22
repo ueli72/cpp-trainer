@@ -254,6 +254,10 @@ class Chat(QTextBrowser):
         self.setOpenExternalLinks(False)
         self._entries = []
 
+    def clear_chat(self):
+        self._entries = [("system", "Verlauf gelöscht.")]
+        self._render()
+
     def add_system(self, text):
         self._entries.append(("system", text))
         self._render()
@@ -882,6 +886,10 @@ class MainWindow(QMainWindow):
         btn_config.setToolTip("Agent-Konfiguration: Modell wählen, Status prüfen")
         btn_config.clicked.connect(self.open_config)
         quick.addWidget(btn_config)
+        btn_clear = QPushButton("🧹 Verlauf")
+        btn_clear.setToolTip("Chat-Anzeige leeren — der Agent erinnert sich weiterhin an die Lektion")
+        btn_clear.clicked.connect(self.agent_clear_chat)
+        quick.addWidget(btn_clear)
         quick.addStretch(0)
         layout.addLayout(quick)
 
@@ -915,6 +923,9 @@ class MainWindow(QMainWindow):
             "fertiger Lösungen.",
         )
         return widget
+
+    def agent_clear_chat(self):
+        self.agent_chat.clear_chat()
 
     def open_config(self):
         dlg = ConfigDialog(self, self.settings,
