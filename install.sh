@@ -2,11 +2,13 @@
 #
 # install.sh — richtet die C++-Lernumgebung auf Linux Mint (Ubuntu/Debian) ein
 #
-# Aufruf:   ./install.sh
-# Wirkung:  installiert bei Bedarf g++/make/curl, VSCodium und OpenCode,
-#           richtet die VSCodium-Erweiterungen ein, prüft die Umgebung und
-#           startet OpenCode mit einer Einführung.
-#           Alles ist idempotent — das Skript kann beliebig oft gelaufen werden.
+# Aufruf:   ./install.sh [--app|--vscodium|--beides]
+# Wirkung:  fragt, welche Variante installiert werden soll
+#             1) Python-App   (GUI: Aufgabenbaum, Editor, Tests, KI-Agent)
+#             2) VSCodium     (klassischer Workflow im Editor)
+#             3) Beides
+#           und installiert alles Nötige (Systempakete, OpenCode, ggf.
+#           VSCodium, Python-Umgebung). Idempotent — beliebig oft lauffähig.
 
 set -euo pipefail
 
@@ -28,43 +30,98 @@ if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
   SUDO="sudo"
 fi
 
+# ---------- Variante bestimmen ----------
+MODUS=""
+case "${1:-}" in
+  --app)      MODUS="app" ;;
+  --vscodium) MODUS="vscodium" ;;
+  --beides)   MODUS="beides" ;;
+  "") ;;
+  *) echo "Unbekannte Option: $1" >&2
+     echo "Aufruf: ./install.sh [--app|--vscodium|--beides]" >&2
+     exit 1 ;;
+esac
+
+if [ -z "$MODUS" ]; then
+  if [ -t 0 ]; then
+    cat <<EOF
+${C_FETT}Was soll installiert werden?${C_RESET}
+  1) Nur Python-App   (GUI: Aufgabenbaum, Editor, Tests, KI-Agent)
+  2) Nur VSCodium     (klassischer Workflow im Editor)
+  3) Beides
+EOF
+    read -r -p "Auswahl [1/2/3, Enter = 3]: " wahl
+    case "$wahl" in
+      1) MODUS="app" ;;
+      2) MODUS="vscodium" ;;
+      *) MODUS="beides" ;;
+    esac
+  else
+    MODUS="beides"
+    info "Kein interaktives Terminal — es wird alles installiert (beides)."
+  fi
+fi
+
+WANT_APP=false
+WANT_VSCODIUM=false
+case "$MODUS" in
+  app)      WANT_APP=true ;;
+  vscodium) WANT_VSCODIUM=true ;;
+  beides)   WANT_APP=true; WANT_VSCODIUM=true ;;
+esac
+
 # ---------- 1. Systempakete ----------
-schritt "1/6 Systempakete (g++, make, curl)"
-if command -v g++ >/dev/null 2>&1 && command -v make >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
-  ok "g++, make und curl sind bereits installiert."
+schritt "1/6 Systempakete"
+FEHLEND=""
+command -v g++ >/dev/null 2>&1 || FEHLEND="$FEHLEND build-essential"
+command -v curl >/dev/null 2>&1 || FEHLEND="$FEHLEND curl"
+if [ "$WANT_APP" = true ]; then
+  command -v python3 >/dev/null 2>&1 || FEHLEND="$FEHLEND python3"
+  if ! python3 -c "import ensurepip" 2>/dev/null; then
+    FEHLEND="$FEHLEND python3-venv python3-pip"
+  fi
+fi
+if [ -z "${FEHLEND# }" ]; then
+  ok "Alle benötigten Systempakete sind bereits installiert."
 else
   if ! command -v apt-get >/dev/null 2>&1; then
-    echo "Kein apt-get gefunden — bitte g++, make und curl von Hand installieren." >&2
+    echo "Kein apt-get gefunden — bitte von Hand installieren:$FEHLEND" >&2
     exit 1
   fi
   if [ -z "$SUDO" ] && [ "$(id -u)" -ne 0 ]; then
     echo "Weder Root-Rechte noch sudo verfügbar — bitte als Nutzer mit sudo ausführen." >&2
     exit 1
   fi
-  info "Installiere build-essential und curl (sudo-Afrage kann kommen) …"
+  info "Installiere:$FEHLEND (sudo-Afrage kann kommen) …"
   $SUDO apt-get update
-  $SUDO apt-get install -y build-essential curl
+  # shellcheck disable=SC2086
+  $SUDO apt-get install -y $FEHLEND
 fi
 
 # ---------- 2. VSCodium ----------
-schritt "2/6 VSCodium (Editor)"
-if command -v codium >/dev/null 2>&1 || command -v vscodium >/dev/null 2>&1; then
-  ok "VSCodium ist bereits installiert."
-else
-  if ! command -v apt-get >/dev/null 2>&1; then
-    info "Kein apt-get gefunden — bitte VSCodium von https://vscodium.com von Hand installieren."
-  elif [ -z "$SUDO" ] && [ "$(id -u)" -ne 0 ]; then
-    info "Ohne sudo kann VSCodium nicht installiert werden — bitte nachholen (siehe vscodium.com)."
+if [ "$WANT_VSCODIUM" = true ]; then
+  schritt "2/6 VSCodium (Editor)"
+  if command -v codium >/dev/null 2>&1 || command -v vscodium >/dev/null 2>&1; then
+    ok "VSCodium ist bereits installiert."
   else
-    info "Richte das offizielle VSCodium-Repository ein und installiere …"
-    curl -fsSL https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg \
-      | gpg --dearmor \
-      | $SUDO dd of=/usr/share/keyrings/vscodium-archive-keyring.gpg
-    echo 'deb [ signed-by=/usr/share/keyrings/vscodium-archive-keyring.gpg ] https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/deb vscodium main' \
-      | $SUDO tee /etc/apt/sources.list.d/vscodium.list > /dev/null
-    $SUDO apt-get update
-    $SUDO apt-get install -y codium
+    if ! command -v apt-get >/dev/null 2>&1; then
+      info "Kein apt-get gefunden — bitte VSCodium von https://vscodium.com von Hand installieren."
+    elif [ -z "$SUDO" ] && [ "$(id -u)" -ne 0 ]; then
+      info "Ohne sudo kann VSCodium nicht installiert werden — bitte nachholen (siehe vscodium.com)."
+    else
+      info "Richte das offizielle VSCodium-Repository ein und installiere …"
+      curl -fsSL https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg \
+        | gpg --dearmor \
+        | $SUDO dd of=/usr/share/keyrings/vscodium-archive-keyring.gpg
+      echo 'deb [ signed-by=/usr/share/keyrings/vscodium-archive-keyring.gpg ] https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/deb vscodium main' \
+        | $SUDO tee /etc/apt/sources.list.d/vscodium.list > /dev/null
+      $SUDO apt-get update
+      $SUDO apt-get install -y codium
+    fi
   fi
+else
+  schritt "2/6 VSCodium (Editor)"
+  info "übersprungen — Variante ohne VSCodium gewählt."
 fi
 
 # ---------- 3. OpenCode ----------
@@ -83,75 +140,45 @@ if ! command -v opencode >/dev/null 2>&1; then
 fi
 
 # ---------- 4. VSCodium-Erweiterungen ----------
-schritt "4/6 VSCodium-Erweiterungen (Markdown-Vorschau, Statusleisten-Buttons)"
-VSCODIUM_BIN=""
-if command -v codium >/dev/null 2>&1; then
-  VSCODIUM_BIN="codium"
-elif command -v vscodium >/dev/null 2>&1; then
-  VSCODIUM_BIN="vscodium"
-fi
-if [ -n "$VSCODIUM_BIN" ]; then
-  # Schönere Markdown-Vorschau + Statusleisten-Buttons der Lernumgebung
-  ERWEITERUNGEN=(
-    "shd101wyy.markdown-preview-enhanced"   # Markdown Preview Enhanced
-    "spencerwmiles.vscode-task-buttons"     # Task Buttons (🧪 ▶ 🔧 ☑ 📖)
-  )
-  for ext in "${ERWEITERUNGEN[@]}"; do
-    if "$VSCODIUM_BIN" --list-extensions 2>/dev/null | grep -qi "^${ext}\$"; then
-      ok "bereits installiert: $ext"
-    else
-      info "Installiere: $ext …"
-      if "$VSCODIUM_BIN" --install-extension "$ext" > /dev/null 2>&1; then
-        ok "$ext installiert."
+if [ "$WANT_VSCODIUM" = true ]; then
+  schritt "4/6 VSCodium-Erweiterungen (Markdown-Vorschau, Statusleisten-Buttons)"
+  VSCODIUM_BIN=""
+  if command -v codium >/dev/null 2>&1; then
+    VSCODIUM_BIN="codium"
+  elif command -v vscodium >/dev/null 2>&1; then
+    VSCODIUM_BIN="vscodium"
+  fi
+  if [ -n "$VSCODIUM_BIN" ]; then
+    ERWEITERUNGEN=(
+      "shd101wyy.markdown-preview-enhanced"   # Markdown Preview Enhanced
+      "spencerwmiles.vscode-task-buttons"     # Task Buttons (🧪 ▶ 🔧 ☑ 📖)
+    )
+    for ext in "${ERWEITERUNGEN[@]}"; do
+      if "$VSCODIUM_BIN" --list-extensions 2>/dev/null | grep -qi "^${ext}\$"; then
+        ok "bereits installiert: $ext"
       else
-        info "$ext konnte nicht installiert werden — bitte von Hand im Erweiterungen-Panel installieren."
+        info "Installiere: $ext …"
+        if "$VSCODIUM_BIN" --install-extension "$ext" > /dev/null 2>&1; then
+          ok "$ext installiert."
+        else
+          info "$ext konnte nicht installiert werden — bitte von Hand im Erweiterungen-Panel installieren."
+        fi
       fi
-    fi
-  done
-
-  # Markdown-Vorschau als Standard: Strg+Shift+V und Strg+K V öffnen
-  # Markdown Preview Enhanced statt der eingebauten Vorschau.
-  # Nur anlegen, wenn noch keine Benutzertastenkürzel existieren.
-  KEYB="$HOME/.config/VSCodium/User/keybindings.json"
-  mkdir -p "$(dirname "$KEYB")"
-  if [ -f "$KEYB" ]; then
-    info "Vorhandene Tastenkürzel wurden nicht verändert ($KEYB)."
+    done
   else
-    cat > "$KEYB" <<'JSON'
-[
-  {
-    "key": "ctrl+shift+v",
-    "command": "-markdown.showPreview",
-    "when": "editorLangId == markdown"
-  },
-  {
-    "key": "ctrl+k v",
-    "command": "-markdown.showPreviewToSide",
-    "when": "editorLangId == markdown"
-  },
-  {
-    "key": "ctrl+shift+v",
-    "command": "markdown-preview-enhanced.openPreview",
-    "when": "editorLangId == markdown"
-  },
-  {
-    "key": "ctrl+k v",
-    "command": "markdown-preview-enhanced.openPreviewToTheSide",
-    "when": "editorLangId == markdown"
-  }
-]
-JSON
-    ok "Standard-Vorschau: Strg+Shift+V / Strg+K V öffnen jetzt Markdown Preview Enhanced."
+    info "VSCodium nicht gefunden — Erweiterungen werden übersprungen."
   fi
 else
-  info "VSCodium nicht gefunden — Erweiterungen werden übersprungen."
-  info "(Ohne VSCodium: Erweiterung 'Markdown Preview Enhanced' im Erweiterungsmarkt deines Editors suchen.)"
+  schritt "4/6 VSCodium-Erweiterungen"
+  info "übersprungen — Variante ohne VSCodium gewählt."
 fi
 
 # ---------- 5. Lernumgebung prüfen ----------
 schritt "5/6 Lernumgebung prüfen"
-# Ausführungsrechte können z. B. beim Kopieren per FAT-USB-Stick verloren gehen
 chmod +x trainer lernen 2>/dev/null || chmod +x trainer
+if [ "$WANT_APP" = true ]; then
+  chmod +x app/start.sh 2>/dev/null || true
+fi
 echo "g++:       $(g++ --version | head -1)"
 echo "opencode:  $(opencode --version)"
 ./trainer list
@@ -162,34 +189,29 @@ cat <<EOF
 ${C_FETT}Willkommen beim C++-Trainer!${C_RESET}
 
 So lernst du:
-  1. Aufgabe lesen:    lektionen/<lektion>/README.md  (im VSCodium-Editor)
-  2. Code schreiben:   lektionen/<lektion>/main.cpp
-  3. Testen:           ./trainer test <lektion>  (oder Strg+Shift-B / 🧪-Button)
-  4. Ausprobieren:     ./trainer run <lektion>
-  5. Hilfe von der KI: hier im OpenCode-Chat fragen, z. B.
-                         „Teste meine Lösung“
-                         „Warum schlägt mein Test fehl?“
-
-Nützliches:
-  ./trainer list                 Lektionen anzeigen
-  ./trainer new 02-variablen     neue Lektion anlegen
-  /lernen (im OpenCode-Chat)     geführte Einführung durch die KI
+  1. Aufgabe lesen:   lektionen/<thema>/<lektion>/README.md
+  2. Code schreiben:  main.cpp (App-Editor oder VSCodium)
+  3. Testen:          App: 🧪-Button  |  Terminal: ./trainer test <lektion>
+  4. Hilfe:           Agent-Tab (App) oder OpenCode-Chat
+     z. B. „Teste meine Lösung“ oder „Warum schlägt mein Test fehl?“
 EOF
 
-# Nur in einem interaktiven Terminal automatisch starten
-if [ ! -t 0 ] || [ ! -t 1 ]; then
+START_APP=false
+if [ "$WANT_APP" = true ] && [ -t 0 ] && [ -t 1 ]; then
+  START_APP=true
+fi
+
+if [ "$START_APP" = true ]; then
+  printf '\n%sDie App wird gestartet …%s\n' "$C_FETT" "$C_RESET"
+  (cd app && ./start.sh)
+  info "(Später starten: cd app && ./start.sh — oder ./install.sh erneut laufen lassen.)"
+elif [ "$WANT_VSCODIUM" = true ] && [ -t 0 ] && [ -t 1 ]; then
+  printf '\n%sOpenCode wird gestartet …%s\n' "$C_FETT" "$C_RESET"
+  exec opencode
+else
   info ""
-  info "Kein interaktives Terminal — OpenCode wird nicht automatisch gestartet."
-  info "Starten:  cd $ROOT && opencode   (dann /lernen eintippen)"
+  info "Kein interaktives Terminal — später starten:"
+  [ "$WANT_APP" = true ] && info "  App:        cd app && ./start.sh"
+  [ "$WANT_VSCODIUM" = true ] && info "  VSCodium:   opencode  (dann /lernen eintippen)"
   exit 0
 fi
-
-printf '\n%sOpenCode begrüßt dich mit einer Einführung …%s\n' "$C_FETT" "$C_RESET"
-if ! timeout 180 opencode run "Stelle dich in einem bis zwei Sätzen auf Deutsch vor und erkläre dem Nutzer knapp, wie das Lernen mit diesem C++-Trainer abläuft: (1) Aufgabe in lektionen/<lektion>/README.md lesen, (2) main.cpp in VSCodium bearbeiten, (3) im Terminal ./trainer test <lektion> ausführen oder Strg+Shift+B bzw. den Tests-Button in VSCodium nutzen, (4) bei roten Tests hier im Chat um Hilfe fragen (z. B. „Teste meine Lösung“). Führe ./trainer list aus und nenne die vorhandenen Lektionen. Beende damit, dass man für die geführte Einführung /lernen tippen kann."; then
-  printf '%sHinweis:%s Die KI-Begrüßung war nicht möglich — vermutlich ist OpenCode auf\n' "$C_GELB" "$C_RESET"
-  info "diesem Rechner noch nicht eingerichtet. Die OpenCode-Oberfläche hilft beim ersten Start."
-  info "Danach im Chat: /lernen"
-fi
-
-printf '\n%sOpenCode wird gestartet …%s\n' "$C_FETT" "$C_RESET"
-exec opencode
