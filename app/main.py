@@ -331,6 +331,9 @@ class CodeEditor(QPlainTextEdit):
         cr = self.contentsRect()
         self.leiste.setGeometry(
             QRect(cr.left(), cr.top(), self.leiste._breite(), cr.height()))
+        # QTextEdit/QPlainTextEdit setzt die Viewport-Ränder bei jedem
+        # resizeEvent selbst zurück — deshalb hier erneut anwenden:
+        self.setViewportMargins(self.leiste._breite(), 0, 0, 0)
 
     def _aktuelle_zeile(self):
         auswahl = QTextEdit.ExtraSelection()
@@ -1056,6 +1059,8 @@ class MainWindow(QMainWindow):
             ed.document().setDefaultFont(monospace(s["editor"]))
             fm = ed.fontMetrics()
             ed.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
+            if hasattr(ed, "_leistenbreite_aktualisieren"):
+                ed._leistenbreite_aktualisieren()
         self.console.setFont(monospace(s["konsole"]))
         self.console_input.setFont(monospace(s["konsole"]))
         self.agent_chat.setFont(monospace(s["agent"]))
