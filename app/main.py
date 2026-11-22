@@ -285,6 +285,9 @@ class ZeilenNummernLeiste(QWidget):
 
     def paintEvent(self, event):
         maler = QPainter(self)
+        # Wichtig: derselbe Font wie im Editor — sonst sind die Nummern
+        # anders groß und verschieben sich vertikal gegenüber dem Code.
+        maler.setFont(self.editor.font())
         maler.fillRect(event.rect(), QColor(SCHEME["zeilen_hg"]))
         block = self.editor.firstVisibleBlock()
         nummer = block.blockNumber()
