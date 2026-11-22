@@ -1,0 +1,302 @@
+#!/usr/bin/env bash
+#
+# trainer — Lernumgebung für C++ (VSCodium + Konsole + OpenCode)
+#
+# Benutzung:  ./trainer <befehl> [lektion]
+# Hilfe:      ./trainer help
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LEKTIONEN_DIR="$ROOT/lektionen"
+VORLAGE_DIR="$ROOT/vorlage"
+
+CXX="${CXX:-g++}"
+CXXFLAGS="${CXXFLAGS:--std=c++17 -Wall -Wextra}"
+
+# --- Farben (nur wenn die Ausgabe ein Terminal ist) ---
+if [ -t 1 ]; then
+  C_GRUEN=$'\033[1;32m'; C_ROT=$'\033[1;31m'; C_GELB=$'\033[33m'
+  C_GRAU=$'\033[90m'; C_FETT=$'\033[1m'; C_RESET=$'\033[0m'
+else
+  C_GRUEN=""; C_ROT=""; C_GELB=""; C_GRAU=""; C_FETT=""; C_RESET=""
+fi
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+help() {
+cat <<EOF
+${C_FETT}trainer — Lernumgebung für C++${C_RESET}
+
+Benutzung:
+  ./trainer list                  Alle Lektionen anzeigen
+  ./trainer new <name>            Neue Lektion aus vorlage/ anlegen
+  ./trainer build <lektion>       Nur kompilieren
+  ./trainer run <lektion>         Kompilieren und manuell ausführen
+  ./trainer test <lektion>        Kompilieren und automatische Tests ausführen
+  ./trainer all                   Tests für alle Lektionen ausführen
+
+<lektion> kann ein Name, ein Teil davon oder ein Ordner sein, z. B.:
+  ./trainer test hello-world      ./trainer test 01
+  ./trainer test lektionen/01-hello-world
+Ohne Angabe wird die einzige vorhandene Lektion verwendet.
+
+Manueller Programmlauf:  ./trainer run eingabe/01
+  → Eingaben im Terminal tippen, beenden mit Strg+D (Abbrechen mit Strg+C).
+EOF
+}
+
+# Lektionsangabe (thema/lektion, Teil davon oder Ordnerpfad) in einen Ordner auflösen
+resolve_lesson() {
+  local ref="${1:-}"
+  if [ -n "$ref" ] && [ -d "$ref" ]; then
+    printf '%s\n' "$(cd "$ref" && pwd)"
+    return 0
+  fi
+  if [ -n "$ref" ] && [ -d "$LEKTIONEN_DIR/$ref" ]; then
+    printf '%s\n' "$(cd "$LEKTIONEN_DIR/$ref" && pwd)"
+    return 0
+  fi
+  # <thema>/<lektion> (z. B. verzweigung/02 oder eingabe/01-hallo):
+  # Thema über Teilnamen finden, darin die Lektion über Teilnamen.
+  if [ -n "$ref" ] && [[ "$ref" == */* ]]; then
+    local thema="${ref%%/*}" lektion="${ref#*/}"
+    local themadir="" tn=0 td base
+    while IFS= read -r td; do
+      base="$(basename "$td")"
+      case "$base" in *"$thema"*) themadir="$td"; tn=$((tn+1)) ;; esac
+    done < <(find "$LEKTIONEN_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+    if [ "$tn" -eq 1 ] && [ -d "$themadir" ]; then
+      local lmatch="" ln=0 ld lbase
+      while IFS= read -r ld; do
+        lbase="$(basename "$ld")"
+        case "$lbase" in *"$lektion"*) lmatch="$ld"; ln=$((ln+1)) ;; esac
+      done < <(find "$themadir" -mindepth 1 -maxdepth 1 -type d | sort)
+      if [ "$ln" -eq 1 ]; then
+        printf '%s\n' "$lmatch"
+        return 0
+      fi
+      if [ "$ln" -gt 1 ]; then
+        die "Die Angabe '$ref' passt auf mehrere Lektionen — bitte genauer tippen."
+      fi
+    fi
+    die "Lektion '$ref' nicht gefunden. Vorhandene Lektionen: ./trainer list"
+  fi
+  local pass d base match all=() d2
+  for pass in exact teil; do
+    match=""
+    while IFS= read -r d; do
+      base="$(basename "$d")"
+      if [ "$pass" = exact ]; then
+        [ "$base" = "$ref" ] || continue
+      else
+        [ -n "$ref" ] || continue
+        case "$base" in *"$ref"*) ;; *) continue ;; esac
+      fi
+      if [ -n "$match" ]; then
+        die "Die Angabe '$ref' passt auf mehrere Lektionen — bitte genauer tippen (z. B. eingabe/02)."
+      fi
+      match="$d"
+    done < <(find "$LEKTIONEN_DIR" -mindepth 2 -maxdepth 2 -type d | sort)
+    if [ -n "$match" ]; then
+      printf '%s\n' "$match"
+      return 0
+    fi
+  done
+  while IFS= read -r d2; do
+    all+=("$d2")
+  done < <(find "$LEKTIONEN_DIR" -mindepth 2 -maxdepth 2 -type d | sort)
+  if [ -z "$ref" ] && [ "${#all[@]}" -eq 1 ]; then
+    printf '%s\n' "${all[0]}"
+    return 0
+  fi
+  if [ -z "$ref" ]; then
+    die "Bitte eine Lektion angeben (z. B. ./trainer test eingabe/02) oder anlegen: ./trainer new eingabe/05-name"
+  fi
+  die "Lektion '$ref' nicht gefunden. Vorhandene Lektionen: ./trainer list"
+}
+
+build_lesson() {
+  local dir="$1"
+  if [ ! -f "$dir/main.cpp" ]; then
+    die "Keine main.cpp in $(basename "$dir") gefunden."
+  fi
+  mkdir -p "$dir/build"
+  # Alle .cpp-Dateien der Lektion kompilieren und zusammenlinken
+  # (Lektionen mit nur main.cpp verhalten sich wie bisher).
+  local src sources=() name names=""
+  for src in "$dir"/*.cpp; do
+    [ -e "$src" ] || continue
+    sources+=("$src")
+    name="$(basename "$src")"
+    names+="${names:+, }$name"
+  done
+  printf '%sKompiliere %s (%s) …%s\n' "$C_GRAU" "$(basename "$dir")" "$names" "$C_RESET"
+  if ! $CXX $CXXFLAGS -o "$dir/build/app" "${sources[@]}"; then
+    printf '%sKompilieren fehlgeschlagen — siehe Fehlermeldungen oben.%s\n' "$C_ROT" "$C_RESET" >&2
+    exit 1
+  fi
+}
+
+# vergleicht zwei Dateien tolerant: nachgestellte Leerzeichen/Leerzeilen am Ende sind egal
+vergleich() {
+  diff -q -B <(sed -e 's/[[:space:]]*$//' "$1") <(sed -e 's/[[:space:]]*$//' "$2") >/dev/null
+}
+
+cmd_list() {
+  printf '%s%s%s\n' "$C_FETT" "Lektionen in lektionen/<thema>/<lektion>:" "$C_RESET"
+  local found=0 d rel ntests
+  while IFS= read -r d; do
+    found=1
+    rel="${d#"$LEKTIONEN_DIR"/}"
+    ntests=0
+    if [ -d "$d/tests" ]; then
+      ntests="$(find "$d/tests" -maxdepth 1 -name '*.in' | wc -l)"
+    fi
+    printf '  %-40s Tests: %s\n' "$rel" "$ntests"
+  done < <(find "$LEKTIONEN_DIR" -mindepth 2 -maxdepth 2 -type d | sort)
+  if [ "$found" -eq 0 ]; then
+    echo "  (noch keine) — anlegen mit: ./trainer new eingabe/01-name"
+  fi
+}
+
+cmd_new() {
+  local name="${1:-}"
+  if [ -z "$name" ]; then
+    die "Benutzung: ./trainer new eingabe/02-summe"
+  fi
+  case "$name" in
+    */*/*|*//*) die "Bitte genau ein Thema angeben: ./trainer new <thema>/<name>, z. B.: ./trainer new eingabe/02-summe" ;;
+    *[[:space:]]*) die "Bitte einen Namen ohne Leerzeichen angeben, z. B.: ./trainer new eingabe/02-summe" ;;
+    */*) ;;
+    *) name="${name}" ;;
+  esac
+  if [ ! -d "$VORLAGE_DIR" ]; then
+    die "Vorlage nicht gefunden: $VORLAGE_DIR"
+  fi
+  local target="$LEKTIONEN_DIR/$name"
+  if [ -e "$target" ]; then
+    die "Die Lektion '$name' existiert bereits."
+  fi
+  mkdir -p "$LEKTIONEN_DIR" "$(dirname "$target")"
+  cp -r "$VORLAGE_DIR/." "$target/"
+  printf '%sLektion angelegt: lektionen/%s%s\n' "$C_GRUEN" "$name" "$C_RESET"
+  echo "Nächste Schritte:"
+  echo "  1. lektionen/$name/README.md öffnen und die Aufgabe hineinschreiben"
+  echo "  2. main.cpp bearbeiten"
+  echo "  3. ./trainer test $name"
+}
+
+cmd_build() {
+  local dir; dir="$(resolve_lesson "${1:-}")"
+  build_lesson "$dir"
+  printf 'Fertig: %s/build/app\n' "$dir"
+}
+
+cmd_run() {
+  local dir; dir="$(resolve_lesson "${1:-}")"
+  build_lesson "$dir"
+  printf '%sManueller Lauf — Eingaben tippen, beenden mit Strg+D (EOF).%s\n' "$C_GRAU" "$C_RESET"
+  printf '%s----------------------------------------%s\n' "$C_GRAU" "$C_RESET"
+  local rc=0
+  "$dir/build/app" || rc=$?
+  printf '%s----------------------------------------%s\n' "$C_GRAU" "$C_RESET"
+  printf '%sProgramm beendet (Exit-Code %s).%s\n' "$C_GRAU" "$rc" "$C_RESET"
+}
+
+cmd_test() {
+  local dir; dir="$(resolve_lesson "${1:-}")"
+  build_lesson "$dir"
+  local tests_dir="$dir/tests"
+  local ins=() in_file
+  for in_file in "$tests_dir"/*.in; do
+    [ -e "$in_file" ] || continue
+    ins+=("$in_file")
+  done
+  echo ""
+  if [ "${#ins[@]}" -eq 0 ]; then
+    printf '%sNoch keine Tests in tests/ gefunden.%s\n' "$C_GELB" "$C_RESET"
+    echo "Entweder selbst anlegen:"
+    echo "  tests/01-name.in   = Eingabe für das Programm (stdin, kann leer sein)"
+    echo "  tests/01-name.out  = erwartete Ausgabe"
+    echo "oder OpenCode im Projektordner starten und bitten:"
+    echo "  „Schreibe Tests für meine Lösung“"
+    return 0
+  fi
+  local total=0 fail=0 name out_file got err rc ok args
+  for in_file in "${ins[@]}"; do
+    total=$((total + 1))
+    name="$(basename "$in_file" .in)"
+    out_file="${in_file%.in}.out"
+    got="$dir/build/last-$name.out"
+    err="$dir/build/last-$name.err"
+    args=()
+    if [ -f "${in_file%.in}.args" ]; then
+      read -r -a args < "${in_file%.in}.args"
+    fi
+    set +e
+    "$dir/build/app" ${args[@]+"${args[@]}"} < "$in_file" > "$got" 2> "$err"
+    rc=$?
+    set -e
+    ok=1
+    if [ ! -f "$out_file" ]; then
+      printf '%s✘ UNVOLLSTÄNDIG:%s %s (Datei %s fehlt)\n' "$C_GELB" "$C_RESET" "$name" "$(basename "$out_file")"
+      fail=$((fail + 1))
+      continue
+    fi
+    if ! vergleich "$out_file" "$got"; then ok=0; fi
+    if [ "$rc" -ne 0 ]; then ok=0; fi
+    if [ "$ok" -eq 1 ]; then
+      printf '%s✔ BESTANDEN%s  %s\n' "$C_GRUEN" "$C_RESET" "$name"
+    else
+      fail=$((fail + 1))
+      printf '%s✘ FEHLGESCHLAGEN%s  %s\n' "$C_ROT" "$C_RESET" "$name"
+      if [ "$rc" -ne 0 ]; then
+        printf '%s    Programm beendete sich mit Exit-Code %s%s\n' "$C_GRAU" "$rc" "$C_RESET"
+      fi
+      if [ -s "$err" ]; then
+        printf '%s    Fehlerausgabe (stderr):%s\n' "$C_GRAU" "$C_RESET"
+        sed 's/^/    | /' "$err"
+      fi
+      printf '%s    Erwartete Ausgabe:%s\n' "$C_GRAU" "$C_RESET"
+      sed 's/^/    | /' "$out_file"
+      printf '%s    Tatsächliche Ausgabe:%s\n' "$C_GRAU" "$C_RESET"
+      sed 's/^/    | /' "$got"
+    fi
+  done
+  echo ""
+  if [ "$fail" -eq 0 ]; then
+    printf '%sAlle %s Tests bestanden — weiter so! 🎉%s\n' "$C_GRUEN" "$total" "$C_RESET"
+  else
+    printf '%s%s von %s Tests fehlgeschlagen.%s\n' "$C_ROT" "$fail" "$total" "$C_RESET"
+    echo "Tipp: OpenCode fragen: „Warum schlägt mein Test fehl?“"
+    return 1
+  fi
+}
+
+cmd_all() {
+  local overall=0 d
+  while IFS= read -r d; do
+    [ -f "$d/main.cpp" ] || continue
+    printf '%s=== %s ===%s\n' "$C_FETT" "${d#"$LEKTIONEN_DIR"/}" "$C_RESET"
+    if ! cmd_test "$d"; then overall=1; fi
+    echo ""
+  done < <(find "$LEKTIONEN_DIR" -mindepth 2 -maxdepth 2 -type d | sort)
+  exit "$overall"
+}
+
+main() {
+  local cmd="${1:-help}"
+  case "$cmd" in
+    list)            cmd_list ;;
+    new)             cmd_new "${2:-}" ;;
+    build)           cmd_build "${2:-}" ;;
+    run)             cmd_run "${2:-}" ;;
+    test)            cmd_test "${2:-}" ;;
+    all)             cmd_all ;;
+    help|-h|--help)  help ;;
+    *) help; echo ""; die "Unbekannter Befehl: $cmd" ;;
+  esac
+}
+
+main "$@"

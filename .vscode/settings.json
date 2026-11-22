@@ -1,0 +1,37 @@
+{
+  // .md-Dateien im Projekt direkt mit Markdown Preview Enhanced öffnen (gerendert)
+  "workbench.editorAssociations": {
+    "*.md": "markdown-preview-enhanced"
+  },
+
+  // Buttons in der Statusleiste (benötigt die Erweiterung "Task Buttons",
+  // ID: spencerwmiles.vscode-task-buttons — wird von install.sh mitinstalliert)
+  "VsCodeTaskButtons.showCounter": false,
+  "VsCodeTaskButtons.tasks": [
+    {
+      "label": "$(beaker) Tests",
+      "task": "Tests: aktuelle Lektion",
+      "tooltip": "Lektion der offenen Datei kompilieren und automatische Tests ausführen (Strg+Shift+B)"
+    },
+    {
+      "label": "$(play) Ausführen",
+      "task": "Programm ausführen (manuell)",
+      "tooltip": "Lektion der offenen Datei kompilieren und zum Ausprobieren starten"
+    },
+    {
+      "label": "$(tools) Kompilieren",
+      "task": "Nur kompilieren",
+      "tooltip": "Nur kompilieren, ohne zu starten"
+    },
+    {
+      "label": "$(checklist) Alle Tests",
+      "task": "Tests: alle Lektionen",
+      "tooltip": "Automatische Tests aller Lektionen ausführen"
+    },
+    {
+      "label": "$(book) Hilfe",
+      "task": "Hilfe: Anleitung öffnen",
+      "tooltip": "README.md zur Benutzung des Systems öffnen"
+    }
+  ]
+}

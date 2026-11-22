@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# lernen — täglicher Einstieg in die Lernumgebung:
+# startet OpenCode mit dem Projektordner als Arbeitsverzeichnis.
+# Im Chat dann z. B. „Teste meine Lösung“ oder /lernen eintippen.
+
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+exec opencode

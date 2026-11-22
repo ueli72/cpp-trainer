@@ -1,0 +1,73 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Tests: aktuelle Lektion",
+      "detail": "Kompiliert und testet die Lektion, in der die offene Datei liegt (Strg+Shift+B)",
+      "type": "shell",
+      "command": "${workspaceFolder}/trainer",
+      "args": ["test", "${fileDirname}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Programm ausführen (manuell)",
+      "detail": "Kompiliert und startet das Programm zum selbst Ausprobieren",
+      "type": "shell",
+      "command": "${workspaceFolder}/trainer",
+      "args": ["run", "${fileDirname}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true, "focus": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Nur kompilieren",
+      "type": "shell",
+      "command": "${workspaceFolder}/trainer",
+      "args": ["build", "${fileDirname}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Tests: alle Lektionen",
+      "type": "shell",
+      "command": "${workspaceFolder}/trainer",
+      "args": ["all"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Neue Lektion anlegen",
+      "type": "shell",
+      "command": "${workspaceFolder}/trainer",
+      "args": ["new", "${input:lessonName}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Hilfe: Anleitung öffnen",
+      "detail": "Öffnet die README.md zur Benutzung des Systems",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "if command -v codium >/dev/null 2>&1; then codium -r \"${workspaceFolder}/README.md\"; elif command -v vscodium >/dev/null 2>&1; then vscodium -r \"${workspaceFolder}/README.md\"; else xdg-open \"${workspaceFolder}/README.md\"; fi"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "never" },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "lessonName",
+      "type": "promptString",
+      "description": "Name der neuen Lektion (z. B. 02-variablen)"
+    }
+  ]
+}

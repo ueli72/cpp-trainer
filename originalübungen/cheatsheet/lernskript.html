@@ -1,0 +1,1408 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>C++ lernskript</title>
+<style>@page { size: A4; margin: 14mm 14mm 14mm 14mm; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 9.6pt; line-height: 1.38; color: #111; }
+h1 { font-size: 20pt; margin: 0 0 3mm; color: #0b3d91; }
+h2 { font-size: 13.5pt; margin: 7mm 0 2.5mm; padding: 1mm 2.5mm; background: #0b3d91; color: #fff; break-after: avoid; }
+h2.first { break-before: auto; }
+h3 { font-size: 10.8pt; margin: 4.5mm 0 1mm; color: #0b3d91; border-bottom: 0.4pt solid #0b3d91; break-after: avoid; }
+p { margin: 1.4mm 0; }
+ul { margin: 1.2mm 0; padding-left: 5mm; }
+li { margin: 0.6mm 0; }
+code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.6pt; background: #eef1f6; padding: 0 0.7mm; }
+pre { font-family: "DejaVu Sans Mono", monospace; font-size: 8pt; line-height: 1.3; margin: 2mm 0; padding: 1.6mm 2.4mm; background: #f4f6fa; border-left: 1.2mm solid #0b3d91; white-space: pre-wrap; break-inside: avoid; }
+pre .c { color: #2e7d32; }
+pre .k { color: #7b1fa2; font-weight: bold; }
+pre .p { color: #b26a00; }
+table { border-collapse: collapse; width: 100%; margin: 2mm 0; break-inside: avoid; }
+th, td { border: 0.4pt solid #999; padding: 0.7mm 1.8mm; vertical-align: top; text-align: left; }
+th { background: #dde5f3; }
+td code { font-size: 8.2pt; }
+.box { margin: 2.5mm 0; padding: 1.8mm 3mm; background: #fff8e1; border-left: 1.2mm solid #f9a825; break-inside: avoid; }
+.box.ok { background: #e8f5e9; border-left-color: #2e7d32; }
+</style></head><body><div class="cols"><h1>C++ Lernskript – die ausführliche Version zum Cheatsheet</h1><div class="box"><b>So benutzt du dieses Dokument:</b> Der Aufbau und die Nummerierung (1–15) sind identisch mit dem Cheatsheet. Hier steht, <b>warum</b> etwas so ist, mit mehr Beispielen und erklärten Ausgaben. Lies einen Abschnitt, löse die Übungen dazu und schau dann im Cheatsheet, wie derselbe Stoff in Kurzform aussieht. So gewöhnst du dich an das Cheatsheet, das du in der Prüfung benutzen darfst.<br>Alle Beispiele mit <code>main</code> sind kompiliert und getestet. Die Zeilen <code>// Ausgabe:</code> zeigen, was das Programm wirklich ausgibt.</div><p><b>Inhalt:</b> 1 Programmgerüst, Typen · 2 Ausdrücke &amp; Operatoren · 3 Kontrollfluss · 4 Funktionen &amp; PRE/POST · 5 Parameter, Referenzen, const · 6 Vector &amp; Matrix · 7 Ein-/Ausgabe · 8 struct &amp; class · 9 Operatoren überladen · 10 Gleitkomma · 11 Ganzzahl-Tricks · 12 Iterative Algorithmen · 13 Rekursion · 14 Vorgehen nach Aufgabentyp · 15 Checkliste</p><h2>1 Programmgerüst, Typen, Konversion</h2><div class="box">Cheatsheet: Abschnitt 1</div><h3>Das kleinste Programm</h3><p>Jedes C++-Programm beginnt in der Funktion <code>main</code>. Mit <code>#include</code> holt man Bibliotheken, <code>std::cin</code> liest von der Tastatur, <code>std::cout</code> schreibt auf den Bildschirm. <code>&lt;&lt;</code> und <code>&gt;&gt;</code> zeigen die Richtung, in die die Daten fliessen.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> a, b;                      <span class="c">// zwei Variablen (noch ohne Wert!)</span>
+  std::cin &gt;&gt; a &gt;&gt; b;            <span class="c">// liest zwei Zahlen, getrennt durch Leerzeichen/Zeilenumbruch</span>
+  std::cout &lt;&lt; a &lt;&lt; " + " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a + b &lt;&lt; '\n';
+  <span class="k">return</span> 0;                      <span class="c">// 0 = alles in Ordnung</span>
+}
+<span class="c">// Eingabe: 3 4</span>
+<span class="c">// Ausgabe: 3 + 4 = 7</span></pre><ul><li><code>'\n'</code> ist ein Zeilenumbruch. <code>std::endl</code> macht dasselbe und leert zusätzlich den Ausgabepuffer (langsamer, aber manchmal verlangt).</li><li>Kompilieren auf der Konsole: <code>g++ -std=c++20 -Wall main.cpp -o main</code>, danach <code>./main</code>. <code>-Wall</code> schaltet nützliche Warnungen ein, z. B. für nicht initialisierte Variablen.</li><li>Wichtige Bibliotheken: <code>&lt;iostream&gt;</code> (Ein-/Ausgabe), <code>&lt;vector&gt;</code>, <code>&lt;string&gt;</code>, <code>&lt;cassert&gt;</code> (<code>assert</code>), <code>&lt;cmath&gt;</code> (<code>sqrt</code>, <code>pow</code>, <code>abs</code>), <code>&lt;climits&gt;</code> (<code>INT_MAX</code>), <code>&lt;algorithm&gt;</code> (<code>sort</code>, <code>swap</code>), <code>&lt;sstream&gt;</code>, <code>&lt;iomanip&gt;</code>.</li></ul><h3>Die wichtigsten Datentypen</h3><table><tr><th>Typ</th><th>Bedeutung</th><th>Wertebereich / Eigenschaft</th></tr><tr><td><code>int</code></td><td>ganze Zahl</td><td>32 Bit: −2 147 483 648 … 2 147 483 647 (<code>INT_MIN</code>…<code>INT_MAX</code>)</td></tr><tr><td><code>unsigned</code></td><td>ganze Zahl ≥ 0</td><td>0 … 4 294 967 295</td></tr><tr><td><code>long long</code></td><td>grosse ganze Zahl</td><td>64 Bit, ca. ±9·10¹⁸</td></tr><tr><td><code>double</code></td><td>Kommazahl</td><td>ca. 15–16 gültige Dezimalstellen</td></tr><tr><td><code>bool</code></td><td>Wahrheitswert</td><td><code>true</code> (=1) oder <code>false</code> (=0)</td></tr><tr><td><code>char</code></td><td>ein Zeichen</td><td><code>'a'</code> ist die Zahl 97, <code>'0'</code> ist 48</td></tr><tr><td><code>std::string</code></td><td>Text</td><td><code>"Hallo"</code></td></tr></table><div class="box">**Overflow bei <code>int</code>:** Rechnet man über <code>INT_MAX</code> hinaus, ist das Verhalten <b>undefiniert</b> (undefined behavior). Das Programm kann alles Mögliche tun. In Prüfungsaufgaben heisst das: Prüfe vorher, ob das Ergebnis noch in den Bereich passt (siehe Abschnitt 11).<br>**<code>unsigned</code> dagegen läuft über** (rechnet modulo 2³²), das ist fest definiert, aber trotzdem tückisch:</div><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  unsigned u = 0;
+  --u;                            <span class="c">// 0 - 1 ergibt nicht -1, sondern ...</span>
+  std::cout &lt;&lt; u &lt;&lt; '\n';
+  std::cout &lt;&lt; (3u - 5u &gt; 0) &lt;&lt; '\n';   <span class="c">// "negative" unsigned-Differenz ist riesig =&gt; true (1)</span>
+}
+<span class="c">// Ausgabe: 4294967295</span>
+<span class="c">// Ausgabe: 1</span></pre><h3>Variablen deklarieren und initialisieren</h3><pre><span class="k">int</span> a = 5;          <span class="c">// Deklaration mit Anfangswert</span>
+<span class="k">int</span> b{5};           <span class="c">// gleichwertig (Brace-Initialisierung); verbietet Verlust: int c{3.7}; ist ein Fehler</span>
+<span class="k">int</span> d{};            <span class="c">// d == 0</span>
+<span class="k">const</span> <span class="k">int</span> N = 10;   <span class="c">// Konstante: N kann nicht mehr geändert werden</span>
+<span class="k">auto</span> z = 2.5;       <span class="c">// Compiler leitet den Typ ab (hier double)</span>
+<span class="k">double</span> e = 1e-3;    <span class="c">// 0.001 (Exponentschreibweise)</span>
+<span class="k">int</span> x;              <span class="c">// ACHTUNG: x hat keinen definierten Wert (Müll), bis man es zuweist</span></pre><div class="box"><b>Merke:</b> Lokale Variablen werden <b>nicht</b> automatisch auf 0 gesetzt. Eine nicht initialisierte Variable zu lesen ist ein klassischer Fehler (Abschnitt 4).</div><h3>Ganzzahldivision, Rest und Konversionen</h3><p>Teilt man zwei <code>int</code>, wird das Ergebnis <b>abgeschnitten</b> (Richtung 0). <code>%</code> liefert den Rest. Das Vorzeichen des Rests ist das des Dividenden (linker Operand).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; 7 / 2 &lt;&lt; '\n';         <span class="c">// Ganzzahldivision</span>
+  std::cout &lt;&lt; -7 / 2 &lt;&lt; '\n';        <span class="c">// Richtung 0, nicht Richtung -unendlich</span>
+  std::cout &lt;&lt; 7 % 3 &lt;&lt; '\n';
+  std::cout &lt;&lt; -7 % 3 &lt;&lt; '\n';        <span class="c">// Rest hat das Vorzeichen von -7</span>
+  std::cout &lt;&lt; 7 / 2.0 &lt;&lt; '\n';       <span class="c">// ein double im Spiel =&gt; Fliesskommadivision</span>
+  <span class="k">int</span> a = 7, b = 2;
+  std::cout &lt;&lt; <span class="k">static_cast</span>&lt;<span class="k">double</span>&gt;(a) / b &lt;&lt; '\n';   <span class="c">// Typ erzwingen, VOR dem Teilen</span>
+  std::cout &lt;&lt; <span class="k">static_cast</span>&lt;<span class="k">double</span>&gt;(a / b) &lt;&lt; '\n';   <span class="c">// zu spät: a/b ist schon 3</span>
+  std::cout &lt;&lt; <span class="k">int</span>(3.9) &lt;&lt; ' ' &lt;&lt; <span class="k">int</span>(-3.9) &lt;&lt; '\n'; <span class="c">// schneidet ab, rundet nicht</span>
+}
+<span class="c">// Ausgabe: 3</span>
+<span class="c">// Ausgabe: -3</span>
+<span class="c">// Ausgabe: 1</span>
+<span class="c">// Ausgabe: -1</span>
+<span class="c">// Ausgabe: 3.5</span>
+<span class="c">// Ausgabe: 3.5</span>
+<span class="c">// Ausgabe: 3</span>
+<span class="c">// Ausgabe: 3 -3</span></pre><p>Regeln für gemischte Typen: <code>int</code> ⊕ <code>double</code> ergibt <code>double</code>. <code>bool</code> wird zu 0/1. <code>double</code> nach <code>int</code> verliert die Nachkommastellen.</p><h3>Zeichen und Ziffern</h3><p>Ein <code>char</code> ist eine kleine Zahl (ASCII). Die Ziffern <code>'0'</code>…<code>'9'</code> stehen hintereinander, darum rechnet man eine Ziffer in ihren Wert um mit <code>c - '0'</code>.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">char</span> c = '7';
+  <span class="k">int</span> wert = c - '0';                       <span class="c">// '7' (55) - '0' (48) = 7</span>
+  std::cout &lt;&lt; wert + 1 &lt;&lt; '\n';
+  std::cout &lt;&lt; <span class="k">char</span>('a' + 2) &lt;&lt; '\n';       <span class="c">// 'a' + 2 ist 99 =&gt; 'c'</span>
+  std::cout &lt;&lt; <span class="k">int</span>('A') &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 8</span>
+<span class="c">// Ausgabe: c</span>
+<span class="c">// Ausgabe: 65</span></pre><h3>Grösse von Containern und Strings</h3><p><code>v.size()</code> liefert einen <b>vorzeichenlosen</b> Typ. Das führt bei <code>v.size() - 1</code> für einen leeren Vektor zum Überlauf auf eine riesige Zahl. Darum nimmt man <code>std::ssize(v)</code>, das vorzeichenbehaftet ist (C++20).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+<span class="p">#include</span> &lt;string&gt;
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; leer;
+  std::cout &lt;&lt; (leer.size() - 1 &gt; 0) &lt;&lt; '\n';        <span class="c">// riesige Zahl! (true)</span>
+  std::cout &lt;&lt; (std::ssize(leer) - 1) &lt;&lt; '\n';       <span class="c">// -1, wie erwartet</span>
+  std::string s = "abc";
+  std::cout &lt;&lt; s.size() &lt;&lt; ' ' &lt;&lt; s[1] &lt;&lt; ' ' &lt;&lt; s + "def" &lt;&lt; ' ' &lt;&lt; s.substr(1, 2) &lt;&lt; '\n';
+  s.erase(0, 1);                                     <span class="c">// löscht 1 Zeichen ab Index 0</span>
+  std::cout &lt;&lt; s &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 1</span>
+<span class="c">// Ausgabe: -1</span>
+<span class="c">// Ausgabe: 3 b abcdef bc</span>
+<span class="c">// Ausgabe: bc</span></pre><div class="box"><b>Übung 1:</b> Was gibt <code>std::cout &lt;&lt; 5 / 2 * 2.0;</code> aus? (Lösung: <code>4</code>, weil zuerst <code>5/2 == 2</code> gerechnet wird.) Und <code>std::cout &lt;&lt; 5 / 2.0 * 2;</code>? (Lösung: <code>5</code>.)</div><h2>2 Ausdrücke &amp; Operatoren</h2><div class="box">Cheatsheet: Abschnitt 2</div><p>Ein <b>Ausdruck</b> hat immer einen <b>Typ</b> und einen <b>Wert</b>, zum Beispiel <code>3 + 4</code> (Typ <code>int</code>, Wert 7) oder <code>x &lt; 3</code> (Typ <code>bool</code>).</p><h3>Präzedenz und Assoziativität</h3><p>Die Präzedenz sagt, welcher Operator zuerst zugreift (wie „Punkt vor Strich“). Bei gleicher Präzedenz entscheidet die Assoziativität (meist von links nach rechts).</p><table><tr><th>Prio</th><th>Operatoren</th><th>Assoziativität</th></tr><tr><td>1</td><td><code>a++  a--  ()  []</code></td><td>links → rechts</td></tr><tr><td>2</td><td><code>++a  --a  !a  -a</code> (unär)</td><td>rechts → links</td></tr><tr><td>3</td><td><code>*  /  %</code></td><td>links → rechts</td></tr><tr><td>4</td><td><code>+  -</code></td><td>links → rechts</td></tr><tr><td>5</td><td><code>&lt;&lt;  &gt;&gt;</code></td><td>links → rechts</td></tr><tr><td>6</td><td><code>&lt;  &lt;=  &gt;  &gt;=</code></td><td>links → rechts</td></tr><tr><td>7</td><td><code>==  !=</code></td><td>links → rechts</td></tr><tr><td>8</td><td><code>&amp;&amp;</code></td><td>links → rechts</td></tr><tr><td>9</td><td><code>||</code></td><td>links → rechts</td></tr><tr><td>10</td><td><code>=  +=  -=  *=  /=  %=</code></td><td>rechts → links</td></tr></table><p>Im Zweifel setzt man Klammern. Zum Auswerten klammert man erst gedanklich komplett:</p><ul><li><code>1 + 2 * 3 % 4</code> wird zu <code>1 + ((2 * 3) % 4)</code> = <code>1 + (6 % 4)</code> = 3.</li><li><code>a &lt; b == c &lt; d</code> wird zu <code>(a &lt; b) == (c &lt; d)</code>.</li><li><code>x = y = 5</code> wird zu <code>x = (y = 5)</code> (rechts-assoziativ).</li></ul><h3>l-value und r-value</h3><ul><li>Ein <b>l-value</b> hat eine Speicheradresse und darf links von <code>=</code> stehen: eine Variable <code>a</code>, ein Element <code>v[i]</code>, und auch <code>++a</code> oder <code>a = b</code>.</li><li>Ein <b>r-value</b> ist ein temporärer Wert ohne Adresse: <code>5</code>, <code>a + b</code>, <code>a++</code>. Er darf nur rechts stehen.</li></ul><pre><span class="k">int</span> a = 1, b = 2, c = 3, d = 4;
+a = b = 5;        <span class="c">// gültig: a = (b = 5). Wert des Ausdrucks 5, Typ int, ein l-value</span>
+1 = a;            <span class="c">// FEHLER: 1 ist ein r-value</span>
+a + b = c + d;    <span class="c">// FEHLER: a + b ist ein r-value</span>
+a = 2 b;          <span class="c">// FEHLER: Syntax, Operator fehlt</span></pre><h3>Prä- und Postinkrement</h3><p><code>++a</code> erhöht <code>a</code> und liefert den <b>neuen</b> Wert (ein l-value). <code>a++</code> erhöht ebenfalls, liefert aber den <b>alten</b> Wert (ein r-value).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> a = 1, b = 10;
+  <span class="k">int</span> x = ++a;            <span class="c">// a wird 2, x bekommt 2</span>
+  <span class="k">int</span> y = b++;            <span class="c">// y bekommt 10, danach wird b 11</span>
+  std::cout &lt;&lt; a &lt;&lt; ' ' &lt;&lt; x &lt;&lt; ' ' &lt;&lt; b &lt;&lt; ' ' &lt;&lt; y &lt;&lt; '\n';
+
+  <span class="k">int</span> p = 3, q = 4;
+  <span class="k">int</span> r = ++p + q++;      <span class="c">// (p+1) + q = 4 + 4; danach q = 5</span>
+  std::cout &lt;&lt; r &lt;&lt; ' ' &lt;&lt; p &lt;&lt; ' ' &lt;&lt; q &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 2 2 11 10</span>
+<span class="c">// Ausgabe: 8 4 5</span></pre><div class="box"><b>Nie</b> dieselbe Variable in einem Ausdruck zweimal verändern oder lesen und verändern, zum Beispiel <code>i + i++</code> oder <code>a[i] = i++</code>. Die Reihenfolge der Auswertung ist nicht festgelegt, das Ergebnis ist undefiniert.</div><h3>Short-circuit-Auswertung</h3><p><code>&amp;&amp;</code> und <code>||</code> werten von links nach rechts aus und <b>hören auf</b>, sobald das Ergebnis feststeht. Die rechte Seite wird dann gar nicht berechnet.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> aufrufe = 0;
+<span class="k">bool</span> f() { ++aufrufe; <span class="k">return</span> <span class="k">true</span>; }
+
+<span class="k">int</span> main() {
+  <span class="k">bool</span> r1 = <span class="k">true</span> || f();      <span class="c">// links schon true =&gt; f() wird NICHT aufgerufen</span>
+  <span class="k">bool</span> r2 = <span class="k">false</span> &amp;&amp; f();     <span class="c">// links false =&gt; f() wird NICHT aufgerufen</span>
+  std::cout &lt;&lt; r1 &lt;&lt; r2 &lt;&lt; " Aufrufe: " &lt;&lt; aufrufe &lt;&lt; '\n';
+  <span class="k">bool</span> r3 = <span class="k">false</span> || f();     <span class="c">// links false =&gt; rechts nötig</span>
+  std::cout &lt;&lt; r3 &lt;&lt; " Aufrufe: " &lt;&lt; aufrufe &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 10 Aufrufe: 0</span>
+<span class="c">// Ausgabe: 1 Aufrufe: 1</span></pre><p>Praktischer Nutzen: Schutz vor ungültigem Zugriff. In <code>i &lt; n &amp;&amp; v[i] == x</code> wird <code>v[i]</code> nur geprüft, wenn <code>i</code> gültig ist.</p><p><code>&amp;&amp;</code> bindet stärker als <code>||</code>. Darum ist <code>true || false &amp;&amp; false</code> dasselbe wie <code>true || (false &amp;&amp; false)</code>, also <code>true</code>, und die rechte Seite wird nicht einmal berechnet.</p><h3>Vergleichsketten sind eine Falle</h3><p><code>8 &gt; 4 &gt; 2 &gt; 1</code> bedeutet <b>nicht</b> „8 grösser als 4 grösser als 2 …“. Wegen der Links-Assoziativität wird <code>((8 &gt; 4) &gt; 2) &gt; 1</code> gerechnet. <code>8 &gt; 4</code> ist <code>true</code> (also 1), <code>1 &gt; 2</code> ist <code>false</code> (0), und <code>0 &gt; 1</code> ist <code>false</code>.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; std::boolalpha;
+  std::cout &lt;&lt; (8 &gt; 4 &gt; 2 &gt; 1) &lt;&lt; '\n';             <span class="c">// ((8&gt;4)&gt;2)&gt;1 = (1&gt;2)&gt;1 = 0&gt;1</span>
+  <span class="k">int</span> a = 100;
+  std::cout &lt;&lt; (2 &lt; a &lt; 4) &lt;&lt; '\n';                 <span class="c">// (2&lt;a)=1, 1&lt;4 =&gt; IMMER true</span>
+  std::cout &lt;&lt; (2 &lt; a &amp;&amp; a &lt; 4) &lt;&lt; '\n';            <span class="c">// so schreibt man es richtig</span>
+  std::cout &lt;&lt; (3 &gt; (1 &lt; <span class="k">true</span>)) &lt;&lt; '\n';            <span class="c">// (1&lt;true)=false=0, 3&gt;0</span>
+  std::cout &lt;&lt; (3 &gt;= 3 == <span class="k">true</span>) &lt;&lt; '\n';            <span class="c">// (3&gt;=3)==1</span>
+}
+<span class="c">// Ausgabe: false</span>
+<span class="c">// Ausgabe: true</span>
+<span class="c">// Ausgabe: false</span>
+<span class="c">// Ausgabe: true</span>
+<span class="c">// Ausgabe: true</span></pre><div class="box">Ebenso tückisch: <code>if (a = 0)</code> ist <b>Zuweisung</b>, kein Vergleich (Wert 0 = false). Mit <code>-Wall</code> warnt der Compiler oft davor.</div><h3>De Morgan und XOR</h3><ul><li><code>!(a &amp;&amp; b)</code> ist gleich <code>!a || !b</code>.</li><li><code>!(a || b)</code> ist gleich <code>!a &amp;&amp; !b</code>.</li><li>„Entweder A oder B, aber nicht beide“ (XOR) schreibt man für <code>bool</code> als <code>A != B</code>.</li></ul><h3>Natürliche Sprache nach C++</h3><p>Übersetze Satzstück für Satzstück, verbinde sie dann mit <code>&amp;&amp;</code> oder <code>||</code>. Teste mit ein, zwei Zahlen, besonders an den Grenzen.</p><table><tr><th>Text</th><th>C++</th><th>Erklärung</th></tr><tr><td>a ist eine gerade Zahl grösser 3</td><td><code>a % 2 == 0 &amp;&amp; a &gt; 3</code></td><td>beide Bedingungen müssen gelten</td></tr><tr><td>a &gt; b und der Abstand ist &lt; 15</td><td><code>a &gt; b &amp;&amp; a - b &lt; 15</code></td><td><code>a - b</code> ist wegen <code>a &gt; b</code> positiv</td></tr><tr><td>a ist höchstens 5-mal so gross wie b, aber mindestens 5-mal so gross wie c</td><td><code>a &lt;= 5 * b &amp;&amp; a &gt;= 5 * c</code></td><td>„höchstens“ ist <code>&lt;=</code>, „mindestens“ ist <code>&gt;=</code></td></tr><tr><td>entweder A oder B, nicht beide</td><td><code>A != B</code></td><td>XOR für <code>bool</code></td></tr><tr><td>a und b sind beide false, oder c ist true, aber nicht beides</td><td><code>(!a &amp;&amp; !b) != c</code></td><td>XOR zwischen zwei Teilbedingungen</td></tr><tr><td>x liegt im Intervall [lo, hi]</td><td><code>lo &lt;= x &amp;&amp; x &lt;= hi</code></td><td>nie <code>lo &lt;= x &lt;= hi</code>!</td></tr><tr><td>a ist false und b ist 0</td><td><code>!a &amp;&amp; b == 0</code></td><td><code>!</code> bindet stärker als <code>==</code></td></tr><tr><td>n durch 3 oder 5 teilbar, aber nicht durch beide</td><td><code>(n % 3 == 0) != (n % 5 == 0)</code></td><td>XOR</td></tr><tr><td>Schaltjahr</td><td><code>y % 4 == 0 &amp;&amp; (y % 100 != 0 || y % 400 == 0)</code></td><td>durch 4, ausser Jahrhunderte, ausser durch 400</td></tr></table><div class="box"><b>Übung 2:</b> Gib an, ob gültig, und den Wert/Typ: <code>a = b + 1</code>, <code>a + 1 = b</code>, <code>++a + a++</code>, <code>(a &gt; b) &gt; c</code>. (Lösung: gültig/l-value; ungültig; gültig aber undefiniert, da <code>a</code> doppelt verändert wird; gültig, Typ <code>bool</code>.)</div><h2>3 Kontrollfluss</h2><div class="box">Cheatsheet: Abschnitt 3</div><h3>if / else und switch</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> n;
+  std::cin &gt;&gt; n;
+  <span class="k">if</span> (n &lt; 0) {
+    std::cout &lt;&lt; "negativ\n";
+  } <span class="k">else</span> <span class="k">if</span> (n == 0) {
+    std::cout &lt;&lt; "null\n";
+  } <span class="k">else</span> {
+    std::cout &lt;&lt; "positiv\n";
+  }
+}
+<span class="c">// Eingabe: 5</span>
+<span class="c">// Ausgabe: positiv</span></pre><p><code>switch</code> wählt je nach ganzzahligem Wert (<code>int</code>, <code>char</code>, <code>enum</code>) einen Einsprungpunkt. Ohne <code>break</code> läuft die Ausführung in den nächsten <code>case</code> weiter (<b>Fall-through</b>). Das nutzt man bewusst, um Fälle zusammenzufassen.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;cassert&gt;
+
+<span class="k">int</span> tage_im_monat(<span class="k">int</span> monat, <span class="k">bool</span> schaltjahr) {
+  <span class="k">int</span> tage;
+  <span class="k">switch</span> (monat) {
+    <span class="k">case</span> 4: <span class="k">case</span> 6: <span class="k">case</span> 9: <span class="k">case</span> 11:   <span class="c">// vier Monate teilen sich diesen Code</span>
+      tage = 30;
+      <span class="k">break</span>;
+    <span class="k">case</span> 2:
+      tage = schaltjahr ? 29 : 28;
+      <span class="k">break</span>;
+    <span class="k">case</span> 1: <span class="k">case</span> 3: <span class="k">case</span> 5: <span class="k">case</span> 7: <span class="k">case</span> 8: <span class="k">case</span> 10: <span class="k">case</span> 12:
+      tage = 31;
+      <span class="k">break</span>;
+    <span class="k">default</span>:
+      assert(<span class="k">false</span>);                   <span class="c">// Monat ausserhalb 1..12 ist ein Programmfehler</span>
+  }
+  <span class="k">return</span> tage;
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; tage_im_monat(2, <span class="k">true</span>) &lt;&lt; ' ' &lt;&lt; tage_im_monat(6, <span class="k">false</span>) &lt;&lt; ' ' &lt;&lt; tage_im_monat(12, <span class="k">false</span>) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 29 30 31</span></pre><h3>Die drei Schleifen</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; 3; ++i) std::cout &lt;&lt; i &lt;&lt; ' ';    <span class="c">// Zählschleife</span>
+  std::cout &lt;&lt; '\n';
+
+  <span class="k">int</span> n = 3;
+  <span class="k">while</span> (n &gt; 0) { std::cout &lt;&lt; n &lt;&lt; ' '; --n; }         <span class="c">// prüft VOR jedem Durchlauf</span>
+  std::cout &lt;&lt; '\n';
+
+  <span class="k">int</span> k = 10;
+  <span class="k">do</span> { std::cout &lt;&lt; k &lt;&lt; ' '; ++k; } <span class="k">while</span> (k &lt; 5);     <span class="c">// Körper läuft mindestens 1x</span>
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 0 1 2</span>
+<span class="c">// Ausgabe: 3 2 1</span>
+<span class="c">// Ausgabe: 10</span></pre><p><b>Welche Schleife passt?</b></p><ul><li><code>for</code>: es gibt eine Zählvariable und man weiss vorher, wie oft (oder bis wohin) gezählt wird.</li><li><code>while</code>: die Bedingung wird vor dem ersten Durchlauf geprüft. Null Durchläufe sind möglich.</li><li><code>do-while</code>: der Körper muss mindestens einmal laufen, typisch bei Eingaben („Nochmal? 0/1“).</li><li><code>while (true)</code> mit <code>break</code>: nur, wenn man mitten im Körper entscheidet (etwa nach dem Einlesen eines Werts).</li></ul><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> summe = 0;
+  <span class="k">while</span> (<span class="k">true</span>) {
+    <span class="k">int</span> x;
+    std::cin &gt;&gt; x;
+    <span class="k">if</span> (x &lt; 0) <span class="k">break</span>;          <span class="c">// Abbruch mitten im Körper</span>
+    <span class="k">if</span> (x % 2 == 0) <span class="k">continue</span>;  <span class="c">// gerade Zahl überspringen, nächste Runde</span>
+    summe += x;
+  }
+  std::cout &lt;&lt; summe &lt;&lt; '\n';  <span class="c">// Summe der ungeraden Zahlen</span>
+}
+<span class="c">// Eingabe: 1 2 3 4 5 -1</span>
+<span class="c">// Ausgabe: 9</span></pre><p><code>break</code> verlässt die (innerste) Schleife, <code>continue</code> springt zum nächsten Durchlauf, <code>return</code> beendet die ganze Funktion.</p><h3>Schleife ohne Körper: der kleinste Teiler</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> n;
+  std::cin &gt;&gt; n;                       <span class="c">// PRE: n &gt;= 2</span>
+  <span class="k">int</span> d;
+  <span class="k">for</span> (d = 2; n % d != 0; ++d);        <span class="c">// leerer Körper (nur ';'): suche den kleinsten Teiler</span>
+  std::cout &lt;&lt; (d == n ? "prim" : "nicht prim") &lt;&lt; " (kleinster Teiler " &lt;&lt; d &lt;&lt; ")\n";
+}
+<span class="c">// Eingabe: 91</span>
+<span class="c">// Ausgabe: nicht prim (kleinster Teiler 7)</span></pre><p>Die Schleife endet spätestens bei <code>d == n</code>, weil <code>n % n == 0</code>. Ist der kleinste Teiler <code>n</code> selbst, ist <code>n</code> prim.</p><h3>Eine Schleife analysieren (typische Prüfungsaufgabe)</h3><p>Aufgabe: Was berechnet das Programm, für welche <code>n</code> ist die Ausgabe korrekt, und warum hält es an?</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> n;
+  std::cin &gt;&gt; n;
+  <span class="k">int</span> x = 1;
+  <span class="k">while</span> (n &gt; 0) {
+    x *= 2;
+    --n;
+  }
+  std::cout &lt;&lt; x &lt;&lt; '\n';
+}
+<span class="c">// Eingabe: 5</span>
+<span class="c">// Ausgabe: 32</span></pre><p><b>1. Von Hand durchrechnen</b> (Tabelle für n = 3):</p><table><tr><th>Zeitpunkt</th><th>n</th><th>x</th></tr><tr><td>vor der Schleife</td><td>3</td><td>1</td></tr><tr><td>nach Durchlauf 1</td><td>2</td><td>2</td></tr><tr><td>nach Durchlauf 2</td><td>1</td><td>4</td></tr><tr><td>nach Durchlauf 3</td><td>0</td><td>8</td></tr></table><p>Das Muster zeigt <code>x = 2ⁿ</code>. Die <b>Schleifeninvariante</b> (gilt vor und nach jedem Durchlauf) lautet: <code>x · 2ⁿ = 2^(n₀)</code>, wobei <code>n₀</code> der Startwert von <code>n</code> ist.</p><p><b>2. Wertebereich:</b> <code>x</code> ist ein <code>int</code> mit Maximum 2³¹−1. Für <code>n ≥ 31</code> läuft <code>x</code> über, die Ausgabe stimmt also nur für <code>n ∈ {0, …, 30}</code>.</p><p><b>3. Terminierung:</b> <code>n</code> ist ganzzahlig, wird in jedem Durchlauf um 1 kleiner (strikt fallend) und die Schleife läuft nur, solange <code>n &gt; 0</code>. Nach höchstens <code>n₀</code> Durchläufen ist <code>n = 0</code> und die Schleife endet. Für <code>n₀ ≤ 0</code> wird der Körper gar nicht ausgeführt.</p><h3>Schleifen umschreiben</h3><p>Jede Schleife lässt sich in jede andere Form bringen: Initialisierung vor die Schleife, Bedingung in <code>while(...)</code>, Update ans Ende des Körpers.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> n = 5;
+
+  <span class="k">int</span> f = 1;                              <span class="c">// Fakultät als for-Schleife</span>
+  <span class="k">for</span> (<span class="k">int</span> i = n; i &gt; 0; --i) f *= i;
+
+  <span class="k">int</span> g = 1, m = n;                       <span class="c">// dasselbe mit while</span>
+  <span class="k">while</span> (m &gt; 0) { g *= m; --m; }
+
+  std::cout &lt;&lt; f &lt;&lt; ' ' &lt;&lt; g &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 120 120</span></pre><p>Potenz mit Schleife: <code>for (r = 1; x &gt; 0; --x) r *= n;</code> berechnet <code>nˣ</code>. Ein <code>do-while</code> ist die natürliche Form für „Summe zweier Eingaben, danach fragen, ob nochmal“:</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> nochmal;
+  <span class="k">do</span> {
+    <span class="k">int</span> a, b;
+    std::cin &gt;&gt; a &gt;&gt; b;
+    std::cout &lt;&lt; a + b &lt;&lt; '\n';
+    std::cin &gt;&gt; nochmal;               <span class="c">// 0 beendet die Schleife</span>
+  } <span class="k">while</span> (nochmal != 0);
+}
+<span class="c">// Eingabe: 1 2 1</span>
+<span class="c">// Eingabe: 10 20 0</span>
+<span class="c">// Ausgabe: 3</span>
+<span class="c">// Ausgabe: 30</span></pre><div class="box"><b>Übung 3:</b> Was gibt <code>for (int i = 1; i &lt;= 10; i += 3) std::cout &lt;&lt; i &lt;&lt; ' ';</code> aus? (Lösung: <code>1 4 7 10</code>.) Wie oft läuft <code>do { ... } while (false);</code>? (Lösung: einmal.)</div><h2>4 Funktionen, PRE/POST, Fehlersuche</h2><div class="box">Cheatsheet: Abschnitt 4</div><h3>Aufbau einer Funktion</h3><p>Eine Funktion hat einen <b>Rückgabetyp</b>, einen <b>Namen</b>, <b>Parameter</b> und einen <b>Körper</b>. <code>void</code> heisst: kein Rückgabewert. Funktionen müssen vor ihrer Verwendung <b>deklariert</b> sein.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> quadrat(<span class="k">int</span> x);                <span class="c">// Deklaration (Prototyp): "es gibt so eine Funktion"</span>
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; quadrat(5) &lt;&lt; '\n';
+}
+
+<span class="k">int</span> quadrat(<span class="k">int</span> x) {               <span class="c">// Definition: der eigentliche Code</span>
+  <span class="k">return</span> x * x;
+}
+<span class="c">// Ausgabe: 25</span></pre><h3>Vor- und Nachbedingungen (PRE / POST)</h3><p>Ein <b>Vertrag</b> zwischen Aufrufer und Funktion:</p><ul><li><b>PRE</b> (Vorbedingung): Was muss der Aufrufer garantieren, damit die Funktion korrekt arbeitet? Hält er sich nicht daran, ist alles erlaubt.</li><li><b>POST</b> (Nachbedingung): Was garantiert die Funktion danach? Dazu zählen der Rückgabewert <b>und alle Seiteneffekte</b>, also Ausgaben und geänderte Referenzparameter.</li></ul><p>PRE sollte so <b>schwach</b> wie möglich sein (nicht mehr verlangen als nötig), POST so <b>vollständig</b> wie möglich. Mit <code>assert</code> prüft man die PRE zur Laufzeit.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;cassert&gt;
+
+<span class="c">// PRE:  b != 0</span>
+<span class="c">// POST: gibt die ganzzahlige Division a / b zurück</span>
+<span class="k">int</span> teile(<span class="k">int</span> a, <span class="k">int</span> b) {
+  assert(b != 0);                  <span class="c">// bricht mit Fehlermeldung ab, wenn die PRE verletzt ist</span>
+  <span class="k">return</span> a / b;
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; teile(7, 2) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 3</span></pre><p>Beispiele, wie man PRE/POST aus Code herausliest:</p><table><tr><th>Code</th><th>PRE</th><th>POST</th></tr><tr><td><code>int res = 1; for (; x &gt; 0; x--) res *= n; return res;</code></td><td><code>x &gt;= 0 &amp;&amp; (n != 0 || x != 0)</code> (0⁰ ausschliessen)</td><td>gibt nˣ zurück</td></tr><tr><td><code>int i = 0; while (n &gt; 0) { n /= 10; ++i; } return i;</code></td><td><code>n &gt; 0</code></td><td>gibt die Anzahl Dezimalstellen von n zurück</td></tr><tr><td><code>int i = 0; while (i*i != n) ++i; return i;</code></td><td><code>n</code> ist eine positive Quadratzahl</td><td>gibt √n zurück</td></tr><tr><td><code>int i = 2; for (; n % i != 0; ++i); return n == i;</code></td><td><code>n &gt;= 2</code></td><td>gibt <code>true</code> zurück, genau wenn n prim ist</td></tr></table><p>Die Vorbedingung bei der Wurzel ist nötig, weil die Schleife sonst nie endet (<code>i*i</code> springt über <code>n</code>, oder Overflow).</p><h3>Fehler in Funktionen finden</h3><p>Prüfe immer: (1) Gibt <b>jeder Pfad</b> einen Wert zurück? (2) Ist alles initialisiert? (3) Genügt die PRE (Division durch 0, ungültiger Index)? (4) Stimmen die Grenzen (<code>&lt;</code> oder <code>&lt;=</code>)?</p><pre><span class="k">bool</span> is_even(<span class="k">int</span> i) {
+  <span class="k">if</span> (i % 2 == 0) <span class="k">return</span> <span class="k">true</span>;
+  <span class="c">// Fehler: für ungerade i wird nichts zurückgegeben =&gt; undefiniertes Verhalten</span>
+}
+
+<span class="k">double</span> invert(<span class="k">int</span> x) {
+  <span class="k">double</span> result;               <span class="c">// Fehler: nicht initialisiert</span>
+  <span class="k">if</span> (x != 0) result = 1.0 / x;
+  <span class="k">return</span> result;               <span class="c">// für x == 0 wird Müll gelesen</span>
+}</pre><p>Korrekturen:</p><pre><span class="c">// POST: gibt true zurück, genau wenn i gerade ist</span>
+<span class="k">bool</span> is_even(<span class="k">int</span> i) {
+  <span class="k">return</span> i % 2 == 0;           <span class="c">// jeder Pfad liefert einen Wert, keine PRE nötig</span>
+}
+
+<span class="c">// Variante 1: PRE verschärfen</span>
+<span class="c">// PRE:  x != 0</span>
+<span class="c">// POST: gibt 1/x zurück</span>
+<span class="k">double</span> invert1(<span class="k">int</span> x) {
+  assert(x != 0);
+  <span class="k">return</span> 1.0 / x;
+}
+
+<span class="c">// Variante 2: Sonderwert für den Problemfall</span>
+<span class="c">// POST: gibt 1/x zurück, oder 0, falls x == 0</span>
+<span class="k">double</span> invert2(<span class="k">int</span> x) {
+  <span class="k">double</span> result = 0;
+  <span class="k">if</span> (x != 0) result = 1.0 / x;
+  <span class="k">return</span> result;
+}</pre><h3>Header und Source trennen</h3><p>Bei grösseren Programmen steht die <b>Deklaration</b> in einer Header-Datei (<code>.h</code>) und die <b>Definition</b> in einer <code>.cpp</code>. So kann <code>main.cpp</code> die Funktionen benutzen, ohne den Code zu kennen.</p><pre><span class="c">// ---- calendar.h ----</span>
+<span class="p">#pragma once</span>                       <span class="c">// verhindert doppeltes Einbinden</span>
+<span class="k">bool</span> is_leap_year(<span class="k">int</span> year);
+
+<span class="c">// ---- calendar.cpp ----</span>
+<span class="p">#include</span> "calendar.h"              <span class="c">// eigene Header in Anführungszeichen</span>
+<span class="k">bool</span> is_leap_year(<span class="k">int</span> year) {
+  <span class="k">return</span> year % 4 == 0 &amp;&amp; (year % 100 != 0 || year % 400 == 0);
+}
+
+<span class="c">// ---- main.cpp ----</span>
+<span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> "calendar.h"
+<span class="k">int</span> main() { std::cout &lt;&lt; is_leap_year(2024) &lt;&lt; '\n'; }</pre><h3>Überladen</h3><p>Mehrere Funktionen dürfen gleich heissen, wenn sich die Parametertypen unterscheiden. Der Compiler wählt nach den Argumenten.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> betrag(<span class="k">int</span> x) { <span class="k">return</span> x &lt; 0 ? -x : x; }
+<span class="k">double</span> betrag(<span class="k">double</span> x) { <span class="k">return</span> x &lt; 0 ? -x : x; }
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; betrag(-3) &lt;&lt; ' ' &lt;&lt; betrag(-2.5) &lt;&lt; '\n';   <span class="c">// erste bzw. zweite Version</span>
+}
+<span class="c">// Ausgabe: 3 2.5</span></pre><p>(Genau dieser Mechanismus steckt hinter den überladenen Operatoren in Abschnitt 9.)</p><h2>5 Parameterübergabe: Wert, Referenz, const</h2><div class="box">Cheatsheet: Abschnitt 5</div><h3>Call by value</h3><p>Standardmässig bekommt die Funktion eine <b>Kopie</b> des Arguments. Änderungen daran wirken nicht auf das Original.</p><h3>Referenzen</h3><p><code>int&amp;</code> ist ein <b>Alias</b>: ein zweiter Name für dieselbe Variable. Ändert die Funktion ihn, ändert sie das Original.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">void</span> erhoehe_kopie(<span class="k">int</span> i)     { ++i; }
+<span class="k">void</span> erhoehe_referenz(<span class="k">int</span>&amp; i) { ++i; }
+
+<span class="k">void</span> tausche(<span class="k">int</span>&amp; a, <span class="k">int</span>&amp; b) {          <span class="c">// klassisches Beispiel für Referenzparameter</span>
+  <span class="k">int</span> t = a;
+  a = b;
+  b = t;
+}
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> x = 5;
+  erhoehe_kopie(x);
+  std::cout &lt;&lt; x &lt;&lt; '\n';               <span class="c">// unverändert</span>
+  erhoehe_referenz(x);
+  std::cout &lt;&lt; x &lt;&lt; '\n';               <span class="c">// verändert</span>
+  <span class="k">int</span> a = 1, b = 2;
+  tausche(a, b);
+  std::cout &lt;&lt; a &lt;&lt; ' ' &lt;&lt; b &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 5</span>
+<span class="c">// Ausgabe: 6</span>
+<span class="c">// Ausgabe: 2 1</span></pre><ul><li>Eine <code>int&amp;</code> braucht einen <b>l-value</b>: <code>erhoehe_referenz(5)</code> ist ein Fehler, <code>5</code> hat keine Adresse.</li><li>Bei <code>const int&amp;</code> darf auch ein r-value übergeben werden, dafür darf die Funktion nichts ändern.</li></ul><h3>const</h3><p><code>const</code> verbietet Änderungen. Das gilt für Variablen und Parameter: <code>int f(const int i) { return ++i; }</code> lässt sich nicht kompilieren.</p><p>**<code>const&amp;</code> für grosse Objekte:** Ein <code>std::vector</code> per Wert zu übergeben kopiert alle Elemente. Mit <code>const std::vector&lt;int&gt;&amp;</code> gibt es keine Kopie, und die Funktion kann das Original trotzdem nicht verändern. So übergibt man Vektoren, die nur gelesen werden.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">int</span> summe(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v) {      <span class="c">// nur lesen, nicht kopieren</span>
+  <span class="k">int</span> s = 0;
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; std::ssize(v); ++i) s += v[i];
+  <span class="k">return</span> s;
+}
+
+<span class="k">void</span> verdopple(std::vector&lt;<span class="k">int</span>&gt;&amp; v) {       <span class="c">// soll ändern =&gt; Referenz ohne const</span>
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; std::ssize(v); ++i) v[i] *= 2;
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {1, 2, 3};
+  verdopple(v);
+  std::cout &lt;&lt; summe(v) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 12</span></pre><h3>Die fünf <code>foo</code>-Varianten (Prüfungsklassiker)</h3><p>Alle fünf Funktionen versuchen <code>++i</code> zurückzugeben. Beurteile: Gibt es einen Compilerfehler? Ist das Verhalten wohldefiniert? Wie lautet die POST?</p><table><tr><th>Funktion</th><th>Beurteilung</th></tr><tr><td><code>int foo(int i) { return ++i; }</code></td><td>Kein Fehler. <code>i</code> ist eine Kopie. POST: gibt <code>i+1</code> zurück, das Original bleibt unverändert.</td></tr><tr><td><code>int foo(const int i) { return ++i; }</code></td><td><b>Compilerfehler</b>: <code>++i</code> ändert einen <code>const</code>-Parameter.</td></tr><tr><td><code>int foo(int&amp; i) { return ++i; }</code></td><td>Kein Fehler. POST: erhöht das Original um 1 und gibt den neuen Wert (als Kopie) zurück.</td></tr><tr><td><code>int&amp; foo(int i) { return ++i; }</code></td><td>Kompiliert, ist aber <b>undefiniert</b>: Es wird eine Referenz auf die lokale Kopie <code>i</code> zurückgegeben, die nach dem Ende der Funktion nicht mehr existiert (*dangling reference*).</td></tr><tr><td><code>const int&amp; foo(int&amp; i) { return ++i; }</code></td><td>Kein Fehler. Erhöht das Original und gibt eine nur lesbare Referenz darauf zurück. Das Original lebt weiter, also wohldefiniert.</td></tr></table><div class="box"><b>Regel:</b> Gib nie eine Referenz auf eine <b>lokale</b> Variable oder einen Parameter zurück, der per Wert übernommen wurde. Das Objekt wird beim Verlassen der Funktion zerstört. (Referenz auf einen Referenzparameter ist dagegen in Ordnung, siehe vierte und fünfte Zeile.)</div><h2>6 std::vector, Matrix, Iteratoren</h2><div class="box">Cheatsheet: Abschnitt 6</div><p>Ein <code>std::vector&lt;T&gt;</code> ist ein Array, das mitwächst. Man braucht <code>#include &lt;vector&gt;</code>.</p><h3>Anlegen und benutzen</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v;                 <span class="c">// leer</span>
+  std::vector&lt;<span class="k">int</span>&gt; a(3);              <span class="c">// 3 Elemente, alle 0</span>
+  std::vector&lt;<span class="k">int</span>&gt; b(3, 7);           <span class="c">// 3 Elemente, alle 7</span>
+  std::vector&lt;<span class="k">int</span>&gt; c = {4, 5, 6};     <span class="c">// Liste</span>
+
+  v.push_back(10);                    <span class="c">// hinten anfügen</span>
+  v.push_back(20);
+  v.push_back(30);
+  std::cout &lt;&lt; v.size() &lt;&lt; ' ' &lt;&lt; v[0] &lt;&lt; ' ' &lt;&lt; v.back() &lt;&lt; '\n';
+  v.pop_back();                       <span class="c">// letztes Element entfernen</span>
+  v[0] = 99;                          <span class="c">// Zugriff mit []: Index 0 .. size-1</span>
+  std::cout &lt;&lt; v[0] &lt;&lt; ' ' &lt;&lt; v.size() &lt;&lt; ' ' &lt;&lt; a[2] &lt;&lt; ' ' &lt;&lt; b[1] &lt;&lt; ' ' &lt;&lt; c[2] &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 3 10 30</span>
+<span class="c">// Ausgabe: 99 2 0 7 6</span></pre><div class="box"><b>Achtung:</b> <code>v[i]</code> prüft den Index <b>nicht</b>. Ein Zugriff ausserhalb von <code>0 … size-1</code> ist undefiniertes Verhalten (oft ein Absturz, oft stilles Falschrechnen).</div><h3>Durchlaufen</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {1, 2, 3};
+
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; std::ssize(v); ++i)    <span class="c">// klassisch mit Index</span>
+    v[i] *= 2;
+
+  <span class="k">for</span> (<span class="k">int</span> x : v) std::cout &lt;&lt; x &lt;&lt; ' ';      <span class="c">// x ist eine KOPIE des Elements</span>
+  std::cout &lt;&lt; '\n';
+
+  <span class="k">for</span> (<span class="k">int</span>&amp; x : v) x += 1;                    <span class="c">// x ist eine REFERENZ =&gt; ändert den Vektor</span>
+  <span class="k">for</span> (<span class="k">const</span> <span class="k">int</span>&amp; x : v) std::cout &lt;&lt; x &lt;&lt; ' ';   <span class="c">// nur lesen, ohne zu kopieren</span>
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 2 4 6</span>
+<span class="c">// Ausgabe: 3 5 7</span></pre><h3>Vektoren in Funktionen</h3><p>Übergib Vektoren <b>immer</b> als Referenz: <code>const std::vector&lt;int&gt;&amp;</code>, wenn die Funktion nur liest, <code>std::vector&lt;int&gt;&amp;</code>, wenn sie ändert. Per Wert würde der ganze Vektor kopiert, und Änderungen gingen verloren.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// POST: gibt die Anzahl Vorkommen von t in v zurück</span>
+<span class="k">int</span> vorkommen(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v, <span class="k">int</span> t) {
+  <span class="k">int</span> c = 0;
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; std::ssize(v); ++i)
+    <span class="k">if</span> (v[i] == t) ++c;
+  <span class="k">return</span> c;
+}
+
+<span class="c">// POST: hängt alle Zahlen bis zur ersten negativen Eingabe an v an</span>
+<span class="k">void</span> lies(std::vector&lt;<span class="k">int</span>&gt;&amp; v) {
+  <span class="k">int</span> x;
+  <span class="k">while</span> (std::cin &gt;&gt; x &amp;&amp; x &gt;= 0) v.push_back(x);
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v;
+  lies(v);
+  <span class="k">int</span> gesucht;
+  std::cin &gt;&gt; gesucht;
+  std::cout &lt;&lt; vorkommen(v, gesucht) &lt;&lt; '\n';
+}
+<span class="c">// Eingabe: 3 5 3 3 7 -1</span>
+<span class="c">// Eingabe: 3</span>
+<span class="c">// Ausgabe: 3</span></pre><p>Weitere Eigenschaften: <code>v2 = v1</code> kopiert den ganzen Vektor, <code>v1 == v2</code> vergleicht elementweise, <code>v.clear()</code> leert, <code>v.resize(n)</code> ändert die Grösse, <code>v.empty()</code> fragt nach Leere.</p><h3>Matrizen: Vektor von Vektoren</h3><p>Eine Matrix mit <code>rows</code> Zeilen und <code>cols</code> Spalten ist ein <code>std::vector&lt;std::vector&lt;int&gt;&gt;</code>. Mit <code>using</code> gibt man dem Typ einen kurzen Namen.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">using</span> vec = std::vector&lt;<span class="k">int</span>&gt;;
+<span class="k">using</span> mat = std::vector&lt;vec&gt;;
+
+<span class="k">int</span> main() {
+  mat m(2, vec(3, 0));            <span class="c">// 2 Zeilen, 3 Spalten, alles 0</span>
+  m[0][1] = 5;                    <span class="c">// Zeile 0, Spalte 1</span>
+  m[1][2] = 7;
+  std::cout &lt;&lt; m.size() &lt;&lt; " Zeilen, " &lt;&lt; m[0].size() &lt;&lt; " Spalten\n";
+  <span class="k">for</span> (<span class="k">int</span> r = 0; r &lt; std::ssize(m); ++r) {
+    <span class="k">for</span> (<span class="k">int</span> c = 0; c &lt; std::ssize(m[r]); ++c) std::cout &lt;&lt; m[r][c] &lt;&lt; ' ';
+    std::cout &lt;&lt; '\n';
+  }
+}
+<span class="c">// Ausgabe: 2 Zeilen, 3 Spalten</span>
+<span class="c">// Ausgabe: 0 5 0</span>
+<span class="c">// Ausgabe: 0 0 7</span></pre><h3>Matrixprodukt</h3><p>Für <code>A</code> (n×k) und <code>B</code> (k×p) ist <code>R = A·B</code> eine n×p-Matrix mit <code>R[r][c] = Σ_i A[r][i]·B[i][c]</code>. Voraussetzung: Spaltenzahl von <code>A</code> = Zeilenzahl von <code>B</code>.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">using</span> vec = std::vector&lt;<span class="k">int</span>&gt;;
+<span class="k">using</span> mat = std::vector&lt;vec&gt;;
+
+<span class="c">// PRE: A und B nicht leer, A[0].size() == B.size()</span>
+<span class="c">// POST: gibt A * B zurück</span>
+mat produkt(<span class="k">const</span> mat&amp; A, <span class="k">const</span> mat&amp; B) {
+  mat R(std::ssize(A), vec(std::ssize(B[0]), 0));
+  <span class="k">for</span> (<span class="k">int</span> r = 0; r &lt; std::ssize(A); ++r)
+    <span class="k">for</span> (<span class="k">int</span> c = 0; c &lt; std::ssize(B[0]); ++c)
+      <span class="k">for</span> (<span class="k">int</span> k = 0; k &lt; std::ssize(B); ++k)
+        R[r][c] += A[r][k] * B[k][c];
+  <span class="k">return</span> R;
+}
+
+<span class="k">int</span> main() {
+  mat A = {{1, 2, 3}, {4, 5, 6}};      <span class="c">// 2x3</span>
+  mat B = {{1, 0}, {0, 1}, {2, 2}};    <span class="c">// 3x2</span>
+  mat R = produkt(A, B);               <span class="c">// 2x2</span>
+  <span class="k">for</span> (<span class="k">const</span> vec&amp; zeile : R) {
+    <span class="k">for</span> (<span class="k">int</span> x : zeile) std::cout &lt;&lt; x &lt;&lt; ' ';
+    std::cout &lt;&lt; '\n';
+  }
+}
+<span class="c">// Ausgabe: 7 8</span>
+<span class="c">// Ausgabe: 16 17</span></pre><p>Nachrechnen: <code>R[0][0] = 1·1 + 2·0 + 3·2 = 7</code>. Matrix mal Vektor geht gleich: <code>res[r] += m[r][c] * v[c]</code>. Transponieren: <code>T[c][r] = m[r][c]</code>.</p><h3>Iteratoren</h3><p>Ein Iterator ist ein „Zeiger“ auf ein Element. <code>v.begin()</code> zeigt auf das erste, <code>v.end()</code> <b>hinter</b> das letzte Element (halboffener Bereich <code>[begin, end)</code>). <code>*it</code> ist das Element, <code>++it</code> rückt weiter, <code>end - begin</code> ist die Anzahl.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">using</span> iterator = std::vector&lt;<span class="k">int</span>&gt;::const_iterator;
+
+<span class="c">// POST: Summe aller Elemente im Bereich [b, e)</span>
+<span class="k">int</span> summe(iterator b, iterator e) {
+  <span class="k">int</span> s = 0;
+  <span class="k">for</span> (iterator it = b; it != e; ++it) s += *it;
+  <span class="k">return</span> s;
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {1, 2, 3, 4};
+  std::cout &lt;&lt; summe(v.begin(), v.end()) &lt;&lt; '\n';          <span class="c">// alles</span>
+  std::cout &lt;&lt; summe(v.begin() + 1, v.begin() + 3) &lt;&lt; '\n'; <span class="c">// Elemente 1 und 2 =&gt; 2 + 3</span>
+}
+<span class="c">// Ausgabe: 10</span>
+<span class="c">// Ausgabe: 5</span></pre><h3>Nützliche Funktionen aus <code>&lt;algorithm&gt;</code></h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+<span class="p">#include</span> &lt;algorithm&gt;
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {5, 2, 9, 1};
+  std::sort(v.begin(), v.end());                    <span class="c">// aufsteigend sortieren</span>
+  <span class="k">for</span> (<span class="k">int</span> x : v) std::cout &lt;&lt; x &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n';
+  std::swap(v[0], v[3]);                            <span class="c">// zwei Elemente vertauschen</span>
+  std::reverse(v.begin(), v.end());
+  <span class="k">for</span> (<span class="k">int</span> x : v) std::cout &lt;&lt; x &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n' &lt;&lt; *std::max_element(v.begin(), v.end()) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 1 2 5 9</span>
+<span class="c">// Ausgabe: 1 5 2 9</span>
+<span class="c">// Ausgabe: 9</span></pre><div class="box"><b>Typische Fehler:</b> <code>v.size() - 1</code> bei leerem Vektor (riesige Zahl, siehe Abschnitt 1) · <code>v[v.size()]</code> (ein Element zu weit) · Vektor per Wert statt per Referenz übergeben (Änderung geht verloren) · Matrix-Dimensionen nicht vor dem Rechnen prüfen.</div><h2>7 Ein-/Ausgabe</h2><div class="box">Cheatsheet: Abschnitt 7</div><h3>Einlesen mit cin</h3><p><code>std::cin &gt;&gt; x</code> liest das nächste „Wort“ und wandelt es in den Typ von <code>x</code> um. Leerzeichen und Zeilenumbrüche werden übersprungen. Der Ausdruck <code>std::cin &gt;&gt; x</code> ist selbst in einer Bedingung nutzbar: er ist <code>true</code>, solange das Lesen geklappt hat.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> x, summe = 0;
+  <span class="k">while</span> (std::cin &gt;&gt; x) summe += x;     <span class="c">// liest bis zum Ende der Eingabe (EOF) oder bis ein Fehler auftritt</span>
+  std::cout &lt;&lt; "Summe " &lt;&lt; summe &lt;&lt; '\n';
+}
+<span class="c">// Eingabe: 4 5</span>
+<span class="c">// Eingabe: 6</span>
+<span class="c">// Ausgabe: Summe 15</span></pre><p>Drei übliche Eingabeformate:</p><ul><li><b>Anzahl zuerst:</b> <code>int n; std::cin &gt;&gt; n; for (int i = 0; i &lt; n; ++i) { ... }</code></li><li><b>Endmarke:</b> lies, bis ein bestimmter Wert (z. B. −1 oder eine negative Zahl) kommt.</li><li><b>Bis zum Ende:</b> <code>while (std::cin &gt;&gt; x)</code>.</li></ul><h3>Zeilen lesen und zerlegen</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;sstream&gt;
+<span class="p">#include</span> &lt;string&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">int</span> main() {
+  std::string zeile;
+  std::getline(std::cin, zeile);        <span class="c">// ganze Zeile inkl. Leerzeichen</span>
+  std::stringstream ss(zeile);          <span class="c">// wie ein cin, das aus dem String liest</span>
+  <span class="k">int</span> ziel;
+  ss &gt;&gt; ziel;                           <span class="c">// erstes Wort</span>
+  std::vector&lt;<span class="k">int</span>&gt; v;
+  <span class="k">int</span> x;
+  <span class="k">while</span> (ss &gt;&gt; x) v.push_back(x);       <span class="c">// alle restlichen Zahlen der Zeile</span>
+  std::cout &lt;&lt; "ziel " &lt;&lt; ziel &lt;&lt; ", " &lt;&lt; v.size() &lt;&lt; " Werte\n";
+}
+<span class="c">// Eingabe: 8 1 7 2 6 6</span>
+<span class="c">// Ausgabe: ziel 8, 5 Werte</span></pre><h3>Ausgabeformatierung</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;iomanip&gt;
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; <span class="k">true</span> &lt;&lt; ' ' &lt;&lt; std::boolalpha &lt;&lt; <span class="k">true</span> &lt;&lt; '\n';      <span class="c">// 1 true</span>
+  std::cout &lt;&lt; 3.14159 &lt;&lt; '\n';                                    <span class="c">// Standard: 6 Stellen insgesamt</span>
+  std::cout &lt;&lt; std::fixed &lt;&lt; std::setprecision(2) &lt;&lt; 3.14159 &lt;&lt; '\n';  <span class="c">// 2 Nachkommastellen</span>
+  std::cerr &lt;&lt; "nur für Fehlermeldungen\n";                        <span class="c">// anderer Kanal (nicht in cout)</span>
+}
+<span class="c">// Ausgabe: 1 true</span>
+<span class="c">// Ausgabe: 3.14159</span>
+<span class="c">// Ausgabe: 3.14</span></pre><div class="box">Bei Prüfungsaufgaben mit Ausgabevergleich muss das Format <b>exakt</b> stimmen: Leerzeichen, Zeilenumbruch am Schluss, keine zusätzlichen Hinweise wie „Bitte Zahl eingeben“ in <code>std::cout</code> (die kommen in <code>std::cerr</code> oder entfallen).</div><h2>8 struct &amp; class</h2><div class="box">Cheatsheet: Abschnitt 8</div><p>Mit <code>struct</code> oder <code>class</code> fasst man Daten und die dazugehörigen Funktionen (<b>Methoden</b>) zu einem neuen Typ zusammen. Ein konkretes Exemplar heisst <b>Objekt</b>.</p><h3>Beispiel: ein Mittelwert-Zähler</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">class</span> Averager {
+  <span class="k">double</span> sum = 0;                  <span class="c">// Daten-Member, private (Standard bei class)</span>
+  <span class="k">int</span> count = 0;                   <span class="c">// mit Standardwerten initialisiert</span>
+<span class="k">public</span>:                            <span class="c">// ab hier von aussen benutzbar</span>
+  <span class="k">void</span> add_value(<span class="k">double</span> value) {
+    sum += value;
+    ++count;
+  }
+  <span class="k">double</span> get_average() <span class="k">const</span> {     <span class="c">// const: verändert das Objekt nicht</span>
+    <span class="k">return</span> count == 0 ? 0 : sum / count;     <span class="c">// Bedingungsoperator: Bedingung ? wenn_wahr : wenn_falsch</span>
+  }
+  <span class="k">void</span> reset() {
+    sum = 0;
+    count = 0;
+  }
+};
+
+<span class="k">int</span> main() {
+  Averager a;                      <span class="c">// Objekt anlegen (Standardwerte sum=0, count=0)</span>
+  std::cout &lt;&lt; a.get_average() &lt;&lt; '\n';
+  a.add_value(2);
+  a.add_value(4);
+  a.add_value(9);
+  std::cout &lt;&lt; a.get_average() &lt;&lt; '\n';
+  a.reset();
+  std::cout &lt;&lt; a.get_average() &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 0</span>
+<span class="c">// Ausgabe: 5</span>
+<span class="c">// Ausgabe: 0</span></pre><h3>Wichtige Begriffe</h3><ul><li><b>Member:</b> Daten (<code>sum</code>, <code>count</code>) und Methoden (<code>add_value</code>, …). Zugriff von aussen mit dem Punkt: <code>a.add_value(2)</code>.</li><li><b>private / public:</b> <code>private</code> ist nur innerhalb der Klasse zugänglich. <code>a.sum</code> von <code>main</code> aus gibt einen Compilerfehler. Bei <code>class</code> ist alles zunächst <code>private</code>, bei <code>struct</code> zunächst <code>public</code>. Sonst sind beide gleich.</li><li><b>Konstruktor:</b> eine Methode ohne Rückgabetyp, die genau den Namen der Klasse trägt. Sie läuft beim Anlegen des Objekts.</li><li><b>const-Methode:</b> ein <code>const</code> hinter der Parameterliste verspricht, dass das Objekt nicht verändert wird. Nur solche Methoden darf man auf einem <code>const</code>-Objekt oder über eine <code>const&amp;</code> aufrufen.</li><li><b>Klasseninvariante:</b> eine Aussage über die Member, die nach jedem Konstruktor und jeder Methode gilt (z. B. <code>count &gt;= 0</code>, <code>sum</code> ist die Summe der <code>count</code> hinzugefügten Werte).</li></ul><h3>Konstruktoren und Initialisierungsliste</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">struct</span> Punkt {
+  <span class="k">int</span> x = 0, y = 0;                 <span class="c">// Standardwerte</span>
+  Punkt() {}                        <span class="c">// Standardkonstruktor: Punkt p;</span>
+  Punkt(<span class="k">int</span> x_, <span class="k">int</span> y_) : x(x_), y(y_) {}   <span class="c">// Initialisierungsliste: initialisiert die Member direkt</span>
+  <span class="k">int</span> manhattan() <span class="k">const</span> { <span class="k">return</span> (x &lt; 0 ? -x : x) + (y &lt; 0 ? -y : y); }
+};
+
+<span class="k">int</span> main() {
+  Punkt a;                          <span class="c">// (0, 0)</span>
+  Punkt b(3, -4);                   <span class="c">// ruft den zweiten Konstruktor</span>
+  std::cout &lt;&lt; a.x &lt;&lt; ' ' &lt;&lt; b.x &lt;&lt; ' ' &lt;&lt; b.y &lt;&lt; ' ' &lt;&lt; b.manhattan() &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 0 3 -4 7</span></pre><p>Ohne Standardwert (<code>= 0</code>) und ohne Konstruktor enthalten <code>int</code>-/<code>double</code>-Member <b>Müll</b>.</p><h3>Deklaration in der .h, Definition in der .cpp</h3><p>Bei getrennten Dateien steht in der Klasse nur die Deklaration, die Methode wird mit <code>Klasse::name</code> ausserhalb definiert:</p><pre><span class="c">// averager.h</span>
+<span class="k">class</span> Averager {
+  <span class="k">double</span> sum = 0;
+  <span class="k">int</span> count = 0;
+<span class="k">public</span>:
+  <span class="k">void</span> add_value(<span class="k">double</span> value);
+  <span class="k">double</span> get_average() <span class="k">const</span>;
+};
+
+<span class="c">// averager.cpp</span>
+<span class="p">#include</span> "averager.h"
+<span class="k">void</span> Averager::add_value(<span class="k">double</span> value) { sum += value; ++count; }
+<span class="k">double</span> Averager::get_average() <span class="k">const</span> { <span class="k">return</span> count == 0 ? 0 : sum / count; }</pre><h3>PRE/POST bei Methoden, Typ und Wert von Ausdrücken</h3><p>Die <b>PRE</b> bezieht sich auf die Parameter *und* auf den Zustand des Objekts davor, die <b>POST</b> beschreibt Rückgabewert und neuen Zustand. Beispiel: <code>void add(const char c);</code> hat POST „der Zähler für das Zeichen <code>c</code> wurde um 1 erhöht“.</p><p>Bei Aufgaben „Welchen Typ und Wert hat der Ausdruck?“ geht man Schritt für Schritt von innen nach aussen vor. Mit dem <code>Averager</code> oben:</p><table><tr><th>Ausdruck</th><th>Typ</th><th>Wert / Bemerkung</th></tr><tr><td><code>a.get_average()</code> (nach 2, 4, 9)</td><td><code>double</code></td><td>5</td></tr><tr><td><code>std::vector&lt;Averager&gt; avs(3);  avs[1]</code></td><td><code>Averager</code></td><td>ein Objekt mit sum=0, count=0</td></tr><tr><td><code>a.count</code></td><td>–</td><td><b>Fehler</b>: <code>count</code> ist <code>private</code></td></tr></table><div class="box"><b>Übung 4:</b> Schreibe eine Klasse <code>Zaehler</code> mit Methoden <code>erhoehe()</code>, <code>hole() const</code> und <code>zuruecksetzen()</code>. Der Zählerstand darf nie negativ sein (Invariante). Teste sie, indem du <code>erhoehe()</code> dreimal aufrufst und dann <code>hole()</code> ausgibst (Ergebnis: 3).</div><h2>9 Operatoren überladen</h2><div class="box">Cheatsheet: Abschnitt 9. Das ist ein Schwerpunktthema: <b>So definiert man Operatoren für eigene Typen.</b></div><h3>Die Grundidee</h3><p>Für <code>int</code> und <code>double</code> kennt der Compiler <code>+</code>, <code>==</code>, <code>&lt;&lt;</code> usw. Für eigene Typen (<code>struct</code>/<code>class</code>) nicht. Du bringst es ihm bei, indem du eine **Funktion mit dem besonderen Namen <code>operator</code> + Symbol** schreibst, zum Beispiel <code>operator+</code> oder <code>operator==</code>. Der Ausdruck <code>a + b</code> ist dann nur eine bequeme Schreibweise für den Aufruf <code>operator+(a, b)</code>.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">struct</span> Punkt { <span class="k">int</span> x, y; };
+
+Punkt <span class="k">operator</span>+(<span class="k">const</span> Punkt&amp; a, <span class="k">const</span> Punkt&amp; b) {
+  <span class="k">return</span> Punkt{a.x + b.x, a.y + b.y};
+}
+
+<span class="k">int</span> main() {
+  Punkt p{1, 2}, q{10, 20};
+  Punkt r = p + q;                    <span class="c">// Kurzschreibweise</span>
+  Punkt s = <span class="k">operator</span>+(p, q);          <span class="c">// dasselbe, ausgeschrieben</span>
+  std::cout &lt;&lt; r.x &lt;&lt; ' ' &lt;&lt; r.y &lt;&lt; ' ' &lt;&lt; s.x &lt;&lt; ' ' &lt;&lt; s.y &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 11 22 11 22</span></pre><p>Wie bei normalen Funktionen wählt der Compiler nach den Parametertypen (Überladen, Abschnitt 4). Du kannst nur Operatoren umdefinieren, an denen mindestens ein <b>eigener Typ</b> beteiligt ist. <code>int + int</code> lässt sich nicht ändern, und neue Symbole wie <code>**</code> kann man nicht erfinden. Nicht überladbar sind <code>::</code>, <code>.</code>, <code>?:</code> und <code>sizeof</code>.</p><h3>Zwei Möglichkeiten: freie Funktion oder Member</h3><p>Ein Operator lässt sich auf zwei Arten schreiben. Pro Operator wählt man <b>eine</b>:</p><table><tr><th>Form</th><th>Aussehen</th><th>Der Ausdruck <code>a + b</code> bedeutet</th></tr><tr><td><b>freie Funktion</b></td><td><code>T operator+(const T&amp; a, const T&amp; b)</code></td><td><code>operator+(a, b)</code></td></tr><tr><td><b>Member</b></td><td><code>T operator+(const T&amp; b) const</code> in der Klasse</td><td><code>a.operator+(b)</code>; linker Operand ist das Objekt selbst (<code>*this</code>)</td></tr></table><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">struct</span> Wert {
+  <span class="k">int</span> v;
+  Wert <span class="k">operator</span>+(<span class="k">const</span> Wert&amp; b) <span class="k">const</span> {         <span class="c">// Member-Version: der linke Operand ist *this</span>
+    <span class="k">return</span> Wert{v + b.v};
+  }
+};
+
+<span class="k">int</span> main() {
+  Wert a{3}, b{4};
+  std::cout &lt;&lt; (a + b).v &lt;&lt; ' ' &lt;&lt; a.<span class="k">operator</span>+(b).v &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 7 7</span></pre><p><b>Faustregeln, welche Form man nimmt:</b></p><table><tr><th>Operator</th><th>Form</th><th>Grund</th></tr><tr><td><code>+ - * /</code> (binär), <code>== != &lt;</code></td><td>frei</td><td>symmetrisch, beide Operanden gleichwertig</td></tr><tr><td><code>+=</code>, <code>++</code>, <code>--</code>, <code>=</code>, <code>[]</code></td><td>Member</td><td>verändern das linke Objekt bzw. brauchen direkten Zugriff</td></tr><tr><td>unäres <code>-</code> (und <code>!</code>)</td><td>Member (oder frei mit einem Parameter)</td><td>nur ein Operand</td></tr><tr><td><code>&lt;&lt;</code> (Ausgabe), <code>&gt;&gt;</code> (Eingabe)</td><td><b>nur frei</b></td><td>der linke Operand ist <code>std::ostream</code>/<code>std::istream</code>, nicht dein Typ</td></tr><tr><td><code>2.0 * a</code></td><td><b>nur frei</b></td><td>der linke Operand ist ein <code>double</code>, kein Objekt, also kein Member-Aufruf möglich</td></tr></table><h3>Schritt für Schritt: die Klasse Complex</h3><p>Schritt 1: Daten und Konstruktoren.</p><pre><span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+  Complex() {}
+  Complex(<span class="k">double</span> r, <span class="k">double</span> i) : re(r), im(i) {}
+};</pre><p>Schritt 2: arithmetische Operatoren als freie Funktionen. Sie ändern ihre Operanden nicht (darum <code>const&amp;</code>) und liefern ein <b>neues Objekt per Wert</b> zurück.</p><pre><span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+  Complex() {}
+  Complex(<span class="k">double</span> r, <span class="k">double</span> i) : re(r), im(i) {}
+};
+
+Complex <span class="k">operator</span>+(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">return</span> Complex(a.re + b.re, a.im + b.im);
+}
+Complex <span class="k">operator</span>-(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">return</span> Complex(a.re - b.re, a.im - b.im);
+}
+Complex <span class="k">operator</span>*(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="c">// (a+bi)(c+di) = (ac - bd) + (ad + bc)i</span>
+  <span class="k">return</span> Complex(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+}
+Complex <span class="k">operator</span>/(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="c">// (a+bi)/(c+di) = ((ac + bd) + (bc - ad)i) / (c^2 + d^2);  PRE: b != 0</span>
+  <span class="k">double</span> n = b.re * b.re + b.im * b.im;
+  <span class="k">return</span> Complex((a.re * b.re + a.im * b.im) / n, (a.im * b.re - a.re * b.im) / n);
+}</pre><p>Schritt 3: Vergleiche. Sie liefern <code>bool</code>. Man definiert <code>==</code> und baut <code>!=</code> daraus.</p><pre><span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+};
+
+<span class="k">bool</span> <span class="k">operator</span>==(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">return</span> a.re == b.re &amp;&amp; a.im == b.im;
+}
+<span class="k">bool</span> <span class="k">operator</span>!=(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">return</span> !(a == b);                  <span class="c">// wiederverwenden statt neu schreiben</span>
+}</pre><p>Schritt 4: Ausgabe <code>&lt;&lt;</code> und Eingabe <code>&gt;&gt;</code>. Der <b>Stream</b> wird per Referenz übergeben und <b>zurückgegeben</b>. Das macht Ketten wie <code>std::cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b</code> möglich, denn <code>(std::cout &lt;&lt; a)</code> liefert wieder <code>std::cout</code>.</p><pre><span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+};
+
+<span class="c">// Ausgabeformat: [re,im]</span>
+std::ostream&amp; <span class="k">operator</span>&lt;&lt;(std::ostream&amp; out, <span class="k">const</span> Complex&amp; a) {
+  <span class="k">return</span> out &lt;&lt; "[" &lt;&lt; a.re &lt;&lt; "," &lt;&lt; a.im &lt;&lt; "]";
+}
+
+<span class="c">// Eingabeformat: [re,im]   z.B.  [1.5,-2]</span>
+std::istream&amp; <span class="k">operator</span>&gt;&gt;(std::istream&amp; in, Complex&amp; a) {   <span class="c">// Complex&amp; OHNE const: wir schreiben hinein</span>
+  <span class="k">char</span> c;                            <span class="c">// fängt die Trennzeichen '[' ',' ']' ab</span>
+  <span class="k">return</span> in &gt;&gt; c &gt;&gt; a.re &gt;&gt; c &gt;&gt; a.im &gt;&gt; c;
+}</pre><p>Schritt 5: Operatoren als <b>Member</b>: unäres Minus, <code>+=</code>, <code>[]</code>, <code>++</code>.</p><pre><span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+  Complex() {}
+  Complex(<span class="k">double</span> r, <span class="k">double</span> i) : re(r), im(i) {}
+
+  Complex <span class="k">operator</span>-() <span class="k">const</span> {                <span class="c">// unäres Minus:  -a   (const: ändert a nicht)</span>
+    <span class="k">return</span> Complex(-re, -im);
+  }
+  Complex&amp; <span class="k">operator</span>+=(<span class="k">const</span> Complex&amp; o) {    <span class="c">// a += b   (ändert a!)</span>
+    re += o.re;
+    im += o.im;
+    <span class="k">return</span> *this;                            <span class="c">// gibt das Objekt selbst zurück (als Referenz)</span>
+  }
+  <span class="k">double</span>&amp; <span class="k">operator</span>[](<span class="k">int</span> i) {                <span class="c">// c[0] ist re, c[1] ist im; Referenz =&gt; auch beschreibbar</span>
+    <span class="k">return</span> i == 0 ? re : im;
+  }
+  <span class="k">double</span> <span class="k">operator</span>[](<span class="k">int</span> i) <span class="k">const</span> {           <span class="c">// Version für const-Objekte: nur lesen</span>
+    <span class="k">return</span> i == 0 ? re : im;
+  }
+  Complex&amp; <span class="k">operator</span>++() {                    <span class="c">// Präfix ++c: erst erhöhen, dann neuen Wert liefern</span>
+    ++re;
+    <span class="k">return</span> *this;
+  }
+  Complex <span class="k">operator</span>++(<span class="k">int</span>) {                  <span class="c">// Postfix c++ (Dummy-int markiert die Postfix-Form)</span>
+    Complex alt = *this;                     <span class="c">// alten Wert merken</span>
+    ++re;
+    <span class="k">return</span> alt;                              <span class="c">// ... und den liefern</span>
+  }
+};</pre><p>Wichtig dabei:</p><ul><li>**<code>*this</code>** ist das Objekt, auf dem die Methode gerade aufgerufen wird (<code>a</code> bei <code>a += b</code>). <code>return *this;</code> gibt es als Referenz zurück, damit man <code>(a += b) += c</code> schreiben kann und kein unnötiges Objekt entsteht.</li><li><b>Rückgabe-Konvention:</b> <code>+ - * /</code> und Postfix-<code>++</code> liefern ein <b>neues Objekt per Wert</b>; <code>+=</code>, <code>-=</code> und Präfix-<code>++</code> liefern eine **Referenz auf <code>*this</code>**; Vergleiche liefern <code>bool</code>; <code>&lt;&lt;</code>/<code>&gt;&gt;</code> liefern den <b>Stream</b>.</li><li>**<code>const</code>:** Alles, was das Objekt nicht verändert (<code>operator-()</code>, lesendes <code>operator[]</code>), wird <code>const</code> markiert.</li><li><b>Wiederverwenden:</b> Hat man <code>+=</code>, baut man <code>+</code> daraus: <code>Complex r = a; r += b; return r;</code>.</li></ul><p>Schritt 6: Weitere Operatoren: Skalarmultiplikation (beide Reihenfolgen!) und <code>&lt;</code>, damit sich Objekte sortieren lassen.</p><pre><span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+  Complex() {}
+  Complex(<span class="k">double</span> r, <span class="k">double</span> i) : re(r), im(i) {}
+};
+
+Complex <span class="k">operator</span>*(<span class="k">double</span> k, <span class="k">const</span> Complex&amp; a) {   <span class="c">// 2.0 * c  (muss frei sein)</span>
+  <span class="k">return</span> Complex(k * a.re, k * a.im);
+}
+Complex <span class="k">operator</span>*(<span class="k">const</span> Complex&amp; a, <span class="k">double</span> k) {   <span class="c">// c * 2.0</span>
+  <span class="k">return</span> k * a;                                   <span class="c">// die andere Version benutzen</span>
+}
+<span class="k">bool</span> <span class="k">operator</span>&lt;(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {   <span class="c">// nach Betrag; erlaubt std::sort</span>
+  <span class="k">return</span> a.re * a.re + a.im * a.im &lt; b.re * b.re + b.im * b.im;
+}</pre><p>Schritt 7: Alles zusammen in einem lauffähigen Programm.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+<span class="p">#include</span> &lt;algorithm&gt;
+
+<span class="k">struct</span> Complex {
+  <span class="k">double</span> re = 0, im = 0;
+  Complex() {}
+  Complex(<span class="k">double</span> r, <span class="k">double</span> i) : re(r), im(i) {}
+  Complex <span class="k">operator</span>-() <span class="k">const</span> { <span class="k">return</span> Complex(-re, -im); }
+  Complex&amp; <span class="k">operator</span>+=(<span class="k">const</span> Complex&amp; o) { re += o.re; im += o.im; <span class="k">return</span> *this; }
+  <span class="k">double</span>&amp; <span class="k">operator</span>[](<span class="k">int</span> i) { <span class="k">return</span> i == 0 ? re : im; }
+};
+
+Complex <span class="k">operator</span>+(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) { Complex r = a; r += b; <span class="k">return</span> r; }
+Complex <span class="k">operator</span>*(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">return</span> Complex(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+}
+Complex <span class="k">operator</span>/(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">double</span> n = b.re * b.re + b.im * b.im;
+  <span class="k">return</span> Complex((a.re * b.re + a.im * b.im) / n, (a.im * b.re - a.re * b.im) / n);
+}
+Complex <span class="k">operator</span>*(<span class="k">double</span> k, <span class="k">const</span> Complex&amp; a) { <span class="k">return</span> Complex(k * a.re, k * a.im); }
+<span class="k">bool</span> <span class="k">operator</span>==(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) { <span class="k">return</span> a.re == b.re &amp;&amp; a.im == b.im; }
+<span class="k">bool</span> <span class="k">operator</span>!=(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) { <span class="k">return</span> !(a == b); }
+<span class="k">bool</span> <span class="k">operator</span>&lt;(<span class="k">const</span> Complex&amp; a, <span class="k">const</span> Complex&amp; b) {
+  <span class="k">return</span> a.re * a.re + a.im * a.im &lt; b.re * b.re + b.im * b.im;
+}
+std::ostream&amp; <span class="k">operator</span>&lt;&lt;(std::ostream&amp; out, <span class="k">const</span> Complex&amp; a) {
+  <span class="k">return</span> out &lt;&lt; "[" &lt;&lt; a.re &lt;&lt; "," &lt;&lt; a.im &lt;&lt; "]";
+}
+std::istream&amp; <span class="k">operator</span>&gt;&gt;(std::istream&amp; in, Complex&amp; a) {
+  <span class="k">char</span> c;
+  <span class="k">return</span> in &gt;&gt; c &gt;&gt; a.re &gt;&gt; c &gt;&gt; a.im &gt;&gt; c;
+}
+
+<span class="k">int</span> main() {
+  Complex a, b;
+  std::cin &gt;&gt; a &gt;&gt; b;                          <span class="c">// liest zwei Zahlen im Format [re,im]</span>
+  std::cout &lt;&lt; a &lt;&lt; " + " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a + b &lt;&lt; '\n';
+  std::cout &lt;&lt; a &lt;&lt; " * " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a * b &lt;&lt; '\n';
+  std::cout &lt;&lt; a &lt;&lt; " / " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a / b &lt;&lt; '\n';
+  std::cout &lt;&lt; "-a = " &lt;&lt; -a &lt;&lt; ", 2*b = " &lt;&lt; 2.0 * b &lt;&lt; '\n';
+  std::cout &lt;&lt; (a == b) &lt;&lt; (a != b) &lt;&lt; (a &lt; b) &lt;&lt; '\n';
+  a += b;                                      <span class="c">// a ist jetzt [4,6]</span>
+  a[0] = 100;                                  <span class="c">// re direkt überschreiben</span>
+  std::cout &lt;&lt; a &lt;&lt; '\n';
+  std::vector&lt;Complex&gt; v = {Complex(3, 4), Complex(1, 0), Complex(0, 2)};
+  std::sort(v.begin(), v.end());               <span class="c">// benutzt operator&lt;</span>
+  <span class="k">for</span> (<span class="k">const</span> Complex&amp; c : v) std::cout &lt;&lt; c;
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Eingabe: [1,2] [3,4]</span>
+<span class="c">// Ausgabe: [1,2] + [3,4] = [4,6]</span>
+<span class="c">// Ausgabe: [1,2] * [3,4] = [-5,10]</span>
+<span class="c">// Ausgabe: [1,2] / [3,4] = [0.44,0.08]</span>
+<span class="c">// Ausgabe: -a = [-1,-2], 2*b = [6,8]</span>
+<span class="c">// Ausgabe: 011</span>
+<span class="c">// Ausgabe: [100,6]</span>
+<span class="c">// Ausgabe: [1,0][0,2][3,4]</span></pre><h3>Ein zweites Beispiel: Brüche</h3><p>Hier muss der Konstruktor mit dem ggT kürzen, damit <code>==</code> richtig funktioniert (Invariante: Nenner &gt; 0, Bruch gekürzt).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> ggt(<span class="k">int</span> a, <span class="k">int</span> b) { <span class="k">return</span> b == 0 ? a : ggt(b, a % b); }
+
+<span class="k">struct</span> Bruch {
+  <span class="k">int</span> z, n;                                   <span class="c">// Zähler, Nenner</span>
+  Bruch(<span class="k">int</span> zaehler, <span class="k">int</span> nenner = 1) {        <span class="c">// PRE: nenner != 0</span>
+    <span class="k">int</span> g = ggt(zaehler &lt; 0 ? -zaehler : zaehler, nenner &lt; 0 ? -nenner : nenner);
+    <span class="k">if</span> (g == 0) g = 1;
+    <span class="k">if</span> (nenner &lt; 0) { zaehler = -zaehler; nenner = -nenner; }
+    z = zaehler / g;
+    n = nenner / g;
+  }
+};
+
+Bruch <span class="k">operator</span>+(<span class="k">const</span> Bruch&amp; a, <span class="k">const</span> Bruch&amp; b) { <span class="k">return</span> Bruch(a.z * b.n + b.z * a.n, a.n * b.n); }
+Bruch <span class="k">operator</span>*(<span class="k">const</span> Bruch&amp; a, <span class="k">const</span> Bruch&amp; b) { <span class="k">return</span> Bruch(a.z * b.z, a.n * b.n); }
+<span class="k">bool</span> <span class="k">operator</span>==(<span class="k">const</span> Bruch&amp; a, <span class="k">const</span> Bruch&amp; b) { <span class="k">return</span> a.z == b.z &amp;&amp; a.n == b.n; }
+<span class="k">bool</span> <span class="k">operator</span>&lt;(<span class="k">const</span> Bruch&amp; a, <span class="k">const</span> Bruch&amp; b) { <span class="k">return</span> a.z * b.n &lt; b.z * a.n; }   <span class="c">// n &gt; 0 vorausgesetzt</span>
+std::ostream&amp; <span class="k">operator</span>&lt;&lt;(std::ostream&amp; o, <span class="k">const</span> Bruch&amp; b) { <span class="k">return</span> o &lt;&lt; b.z &lt;&lt; "/" &lt;&lt; b.n; }
+
+<span class="k">int</span> main() {
+  Bruch a(1, 2), b(1, 3);
+  std::cout &lt;&lt; a + b &lt;&lt; ' ' &lt;&lt; a * b &lt;&lt; ' ' &lt;&lt; (a &lt; b) &lt;&lt; ' ' &lt;&lt; (Bruch(2, 4) == a) &lt;&lt; ' ' &lt;&lt; Bruch(6, -4) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 5/6 1/6 0 1 -3/2</span></pre><h3>Private Member und <code>friend</code></h3><p>Sind die Member einer Klasse <code>private</code>, kann eine freie Funktion wie <code>operator&lt;&lt;</code> nicht darauf zugreifen. Zwei Lösungen: öffentliche Getter-Methoden, oder <code>friend</code>: die Klasse erlaubt dieser einen Funktion ausdrücklich den Zugriff.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">class</span> Geld {
+  <span class="k">int</span> rappen = 0;
+<span class="k">public</span>:
+  Geld(<span class="k">int</span> r) : rappen(r) {}
+  Geld <span class="k">operator</span>+(<span class="k">const</span> Geld&amp; o) <span class="k">const</span> { <span class="k">return</span> Geld(rappen + o.rappen); }   <span class="c">// Member: sieht private Daten</span>
+  friend std::ostream&amp; <span class="k">operator</span>&lt;&lt;(std::ostream&amp; out, <span class="k">const</span> Geld&amp; g);        <span class="c">// erlaubt Zugriff</span>
+};
+
+std::ostream&amp; <span class="k">operator</span>&lt;&lt;(std::ostream&amp; out, <span class="k">const</span> Geld&amp; g) {
+  <span class="k">return</span> out &lt;&lt; g.rappen / 100 &lt;&lt; "." &lt;&lt; (g.rappen % 100 &lt; 10 ? "0" : "") &lt;&lt; g.rappen % 100;
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; Geld(1234) + Geld(5) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 12.39</span></pre><h3>Fallstricke</h3><ul><li><b>Stream nicht zurückgeben:</b> <code>void operator&lt;&lt;(...)</code> kompiliert, aber <code>std::cout &lt;&lt; a &lt;&lt; b</code> geht nicht mehr.</li><li>**<code>&gt;&gt;</code> mit <code>const T&amp;</code>:** Man kann nicht in ein <code>const</code> Objekt hineinlesen. Der Parameter muss <code>T&amp;</code> sein.</li><li><b>Referenz auf lokale Variable zurückgeben:</b> <code>Complex&amp; operator+(...)</code> mit einer lokalen Variable <code>r</code> ist ein Dangling-Reference-Fehler (Abschnitt 5). Arithmetische Operatoren liefern <b>per Wert</b>.</li><li>**Member-Operator vergessen <code>const</code>:** Sonst lässt er sich auf <code>const</code>-Objekten und <code>const&amp;</code>-Parametern nicht aufrufen.</li><li>**<code>==</code> auf <code>double</code>:** Gleichheit von Kommazahlen ist heikel (Abschnitt 10). In Übungen reicht oft der exakte Vergleich.</li><li><b>Nur Sinnvolles überladen:</b> Ein <code>+</code> sollte sich wie Addition anfühlen. Ein überladenes <code>operator&lt;&lt;</code> zum Beispiel kann sich an die Format-Vorgabe der Aufgabe halten müssen.</li><li>**Zuweisung <code>=</code> und Kopieren:** Für einfache Klassen erzeugt der Compiler <code>operator=</code> und den Kopierkonstruktor selbst. Man muss sie nicht schreiben, <code>a = b;</code> kopiert alle Member.</li></ul><h3>So gehst du bei einer Operator-Aufgabe vor</h3><p>1. Aus <code>main.cpp</code> ablesen, <b>welche Ausdrücke</b> vorkommen (<code>c1 + c2</code>, <code>-c1</code>, <code>c1 == c2</code>, <code>std::cin &gt;&gt; c1</code>, <code>std::cout &lt;&lt; c1</code>).</p><p>2. Pro Ausdruck die Signatur wählen (Tabelle oben) und im Header <b>deklarieren</b>, in der <code>.cpp</code> <b>definieren</b>.</p><p>3. Eingabe-/Ausgabeformat aus der Aufgabe genau übernehmen (Klammern, Kommas, Leerzeichen).</p><p>4. Mit einem kleinen Test jede Operation einmal aufrufen.</p><div class="box"><b>Übung 5:</b> Definiere für <code>struct Vec2 { double x, y; }</code> die Operatoren <code>+</code>, <code>-</code> (binär und unär), <code>*</code> (Skalar, beide Reihenfolgen), <code>==</code> und <code>&lt;&lt;</code>. Gib <code>[x,y]</code> aus. Teste: <code>Vec2{1,2} + Vec2{3,4}</code> ergibt <code>[4,6]</code>.</div><h2>10 Gleitkomma &amp; Zahlendarstellung</h2><div class="box">Cheatsheet: Abschnitt 10</div><h3>Wie ein <code>double</code> aufgebaut ist</h3><p>Eine Gleitkommazahl wird als <b>±1.m × 2ᵉ</b> gespeichert: ein Vorzeichen, eine <b>Mantisse</b> <code>m</code> (die Nachkommastellen nach der führenden 1) und ein <b>Exponent</b> <code>e</code>. Beim <code>double</code> sind es 1 + 11 + 52 Bit. Weil die Mantisse endlich viele Bits hat, lassen sich die meisten Zahlen nur <b>näherungsweise</b> darstellen. Selbst <code>0.1</code> ist im Binärsystem periodisch und wird gerundet.</p><h3>Dezimal in Binär umrechnen (Übungsmodell)</h3><p>In den Übungen wird ein kleines Modell benutzt: <b>1.b₁b₂b₃ × 2ᵉ</b> mit nur 3 Nachkommabits. Vorgehen:</p><p>1. Vorkommateil durch fortgesetztes Teilen durch 2 in Binär (die Reste von unten nach oben lesen).</p><p>2. Nachkommateil durch fortgesetztes <b>Verdoppeln</b>: Ist das Ergebnis ≥ 1, ist das nächste Bit 1 (und man zieht 1 ab), sonst 0.</p><p>3. Normalisieren: das Komma so verschieben, dass genau eine 1 davor steht (Exponent anpassen).</p><p>4. Auf 3 Nachkommabits <b>runden</b> (ist der Rest grösser als die Hälfte der letzten Stelle, aufrunden).</p><table><tr><th>Zahl</th><th>Binär</th><th>Normalisiert</th><th>gerundet auf 3 Bit</th><th>dargestellter Wert</th><th>Fehler</th></tr><tr><td>0.75</td><td>0.11</td><td>1.1 × 2⁻¹</td><td><code>1.100×2⁻¹</code></td><td>0.75</td><td>0</td></tr><tr><td>7</td><td>111</td><td>1.11 × 2²</td><td><code>1.110×2²</code></td><td>7</td><td>0</td></tr><tr><td>3.1416</td><td>11.0010010…</td><td>1.10010010 × 2¹</td><td><code>1.101×2¹</code> (der Rest 0.10010 ist &gt; 0.5, also aufrunden)</td><td>3.25</td><td>0.1084</td></tr><tr><td>2.718</td><td>10.10110…</td><td>1.010110 × 2¹</td><td><code>1.011×2¹</code> (der Rest 0.110 ist &gt; 0.5, also aufrunden)</td><td>2.75</td><td>0.032</td></tr></table><p><b>Zurückrechnen:</b> <code>1.101×2¹</code> ist (1 + ½ + ⅛)·2 = 1.625·2 = 3.25. Der <b>Fehler</b> ist |exakter Wert − dargestellter Wert|.</p><div class="box">Im Übungsmodell kam auch <code>0.11 → 1.000×2⁻³</code> vor. Das passt zu einer Einschränkung des Exponenten (hier wohl auf −3 nach unten; das ist aus der Musterlösung abgeleitet, nicht aus dem Aufgabentext, prüfe das in deiner Aufgabe). Dann ist 0.125 (= <code>1.000×2⁻³</code>) die nächste darstellbare Zahl zu 0.11, mit Fehler 0.015.</div><h3>Absorption und Vergleiche</h3><p>Addiert man eine sehr kleine zu einer grossen Zahl, geht die kleine <b>verloren</b>, weil die Mantisse nicht genug Stellen hat. Im Übungsmodell bleibt <code>6.0 + 0.11</code> gleich <code>1.100×2²</code>. Beim <code>double</code> gilt <code>1e16 + 1 == 1e16</code>.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;cmath&gt;
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; std::boolalpha;
+  std::cout &lt;&lt; (1e16 + 1 == 1e16) &lt;&lt; '\n';              <span class="c">// das +1 geht verloren</span>
+  std::cout &lt;&lt; (0.1 + 0.2 == 0.3) &lt;&lt; '\n';              <span class="c">// nicht exakt gleich!</span>
+  std::cout &lt;&lt; (std::abs((0.1 + 0.2) - 0.3) &lt; 1e-9) &lt;&lt; '\n';   <span class="c">// so vergleicht man double</span>
+}
+<span class="c">// Ausgabe: true</span>
+<span class="c">// Ausgabe: false</span>
+<span class="c">// Ausgabe: true</span></pre><p><b>Regeln:</b> Nie <code>==</code> auf <code>double</code> verwenden, sondern „Abstand kleiner als eine kleine Toleranz“. Sehr grosse Zwischenwerte (z. B. Fakultäten) laufen zu <code>inf</code> oder <code>nan</code> über.</p><h3>Binärentwicklung ausgeben</h3><p>Algorithmus für 0 ≤ x &lt; 2: das erste Bit ist 1, falls <code>x &gt;= 1</code>. Dann zieht man das Bit ab und verdoppelt (das verschiebt das Komma), und wiederholt.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">double</span> x;
+  std::cin &gt;&gt; x;                       <span class="c">// PRE: 0 &lt;= x &lt; 2</span>
+  <span class="k">int</span> b = x &gt;= 1;                      <span class="c">// Vorkommabit</span>
+  std::cout &lt;&lt; b &lt;&lt; ".";
+  <span class="k">for</span> (<span class="k">int</span> i = 1; i &lt; 16; ++i) {       <span class="c">// 15 Nachkommabits</span>
+    x -= b;                            <span class="c">// gesetztes Bit entfernen</span>
+    x *= 2;                            <span class="c">// nächste Stelle nach vorne holen</span>
+    b = x &gt;= 1;
+    std::cout &lt;&lt; b;
+  }
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Eingabe: 0.75</span>
+<span class="c">// Ausgabe: 0.110000000000000</span></pre><p>Warum geht das genau? <code>0.75 → 1.5</code> (Bit 1) <code>→ 0.5·2 = 1.0</code> (Bit 1) <code>→ 0</code> (Bit 0 …). Das entspricht <code>0.11₂</code>.</p><h3>Näherung von π (zwei Reihen)</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> m = 30;                                          <span class="c">// Anzahl Terme</span>
+
+  <span class="k">double</span> pi1 = 0;                                      <span class="c">// Leibniz: pi = 4 (1 - 1/3 + 1/5 - ...)</span>
+  <span class="k">for</span> (<span class="k">int</span> j = 0; j &lt; m; ++j)
+    pi1 += (j % 2 == 0 ? 4.0 : -4.0) / (2 * j + 1);    <span class="c">// Vorzeichen wechselt</span>
+
+  <span class="k">double</span> pi2 = 2, zaehler = 2, nenner = 1;             <span class="c">// pi = 2 * Summe_j j!/(3*5*...*(2j+1))</span>
+  <span class="k">for</span> (<span class="k">int</span> j = 1; j &lt; m; ++j) {
+    zaehler *= j;                                      <span class="c">// wird j!</span>
+    nenner *= 2 * j + 1;                               <span class="c">// wird 3*5*...*(2j+1)</span>
+    pi2 += zaehler / nenner;                           <span class="c">// nächster Term</span>
+  }
+  std::cout &lt;&lt; pi1 &lt;&lt; ' ' &lt;&lt; pi2 &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 3.10827 3.14159</span></pre><p>Die zweite Reihe konvergiert viel schneller. Zähler und Nenner wachsen aber schnell, bei sehr vielen Termen laufen sie über (<code>inf</code>/<code>nan</code>). Man rechnet die Terme <b>inkrementell</b> (jeden Term aus dem vorherigen), statt jeweils Fakultäten neu zu berechnen.</p><h3>Auf ganze Zahlen runden</h3><p>Die Umwandlung <code>int(x)</code> schneidet nur ab. Für „richtiges“ Runden (.5 weg von 0):</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="c">// PRE: x passt nach dem Runden in den Bereich von int</span>
+<span class="c">// POST: gibt die nächste ganze Zahl zurück; bei .5 die weiter von 0 entfernte</span>
+<span class="k">int</span> round_number(<span class="k">double</span> x) {
+  <span class="k">int</span> t = x;                <span class="c">// schneidet ab (Richtung 0)</span>
+  <span class="k">double</span> d = x - t;         <span class="c">// verbleibender Rest, exakt berechenbar</span>
+  <span class="k">if</span> (d &gt;= 0.5)  <span class="k">return</span> t + 1;
+  <span class="k">if</span> (d &lt;= -0.5) <span class="k">return</span> t - 1;
+  <span class="k">return</span> t;
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; round_number(2.4) &lt;&lt; ' ' &lt;&lt; round_number(2.5) &lt;&lt; ' ' &lt;&lt; round_number(-2.5) &lt;&lt; ' ' &lt;&lt; round_number(-2.4) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 2 3 -3 -2</span></pre><h2>11 Ganzzahl-Tricks</h2><div class="box">Cheatsheet: Abschnitt 11</div><h3>Ziffern zerlegen</h3><p><code>n % 10</code> ist die letzte Ziffer, <code>n / 10</code> schneidet sie ab.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> n = 4096;
+  <span class="k">int</span> stellen = 0, summe = 0;
+  <span class="k">for</span> (<span class="k">int</span> m = n; m &gt; 0; m /= 10) {      <span class="c">// PRE: n &gt; 0</span>
+    ++stellen;
+    summe += m % 10;
+  }
+  std::cout &lt;&lt; stellen &lt;&lt; ' ' &lt;&lt; summe &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 4 19</span></pre><p>(Für <code>n == 0</code> zählt diese <code>for</code>-Schleife 0 Stellen. Will man dafür 1, nimmt man <code>do { ... } while (m &gt; 0);</code>.)</p><h3>Zahlensystem wechseln</h3><p>Man teilt wiederholt durch die Basis <code>b</code>. Die Reste sind die Ziffern von hinten nach vorn. Hier werden sie als Dezimalziffern einer neuen Zahl zusammengesetzt (für Basen &lt; 10).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="c">// PRE: n &gt;= 0, 1 &lt; b &lt; 10</span>
+<span class="c">// POST: gibt die Ziffern von n zur Basis b als Dezimalzahl zurück (z.B. 10, 2 -&gt; 1010)</span>
+<span class="k">int</span> convert_base(<span class="k">int</span> n, <span class="k">int</span> b) {
+  <span class="k">int</span> result = 0, pos = 1;               <span class="c">// pos: aktuelle Stelle 1, 10, 100, ...</span>
+  <span class="k">while</span> (n != 0) {
+    result += pos * (n % b);             <span class="c">// Rest ist die nächste Ziffer von hinten</span>
+    n /= b;
+    pos *= 10;
+  }
+  <span class="k">return</span> result;
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; convert_base(10, 2) &lt;&lt; ' ' &lt;&lt; convert_base(14, 9) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 1010 15</span></pre><h3>Ganzzahl kaufmännisch runden</h3><p>Mit Ganzzahlen: <code>a / b</code> schneidet ab. Rundet man stattdessen „halbe aufwärts“, rechnet man <code>(a + b/2) / b</code> (für <code>a, b &gt; 0</code>). Beispiel Parallelschaltung von Widerständen mit gerundetem Ergebnis <code>R = R12·R34 / (R12 + R34)</code>:</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> R1 = 10, R2 = 20, R3 = 30, R4 = 40;
+  <span class="k">int</span> R12 = R1 + R2;                   <span class="c">// Serienschaltung: addieren</span>
+  <span class="k">int</span> R34 = R3 + R4;
+  <span class="k">int</span> R = (R12 * R34 + (R12 + R34) / 2) / (R12 + R34);     <span class="c">// Parallel, gerundet</span>
+  std::cout &lt;&lt; R &lt;&lt; '\n';              <span class="c">// exakt 30*70/100 = 21</span>
+}
+<span class="c">// Ausgabe: 21</span></pre><h3>Overflow vorher erkennen</h3><p>Statt <code>a + b</code> zu rechnen und hinterher zu schauen (zu spät, da undefiniert), prüft man <b>vorher</b> ohne zu überlaufen:</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;climits&gt;
+
+<span class="c">// PRE: b &gt;= 0</span>
+<span class="k">bool</span> addition_laeuft_ueber(<span class="k">int</span> a, <span class="k">int</span> b) { <span class="k">return</span> a &gt; INT_MAX - b; }
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; addition_laeuft_ueber(INT_MAX, 1) &lt;&lt; addition_laeuft_ueber(5, 6) &lt;&lt; '\n';
+  <span class="c">// Fibonacci bis zum letzten darstellbaren Wert</span>
+  <span class="k">int</span> a = 0, b = 1, n = 0;
+  <span class="k">while</span> (!addition_laeuft_ueber(a, b)) { <span class="k">int</span> nx = a + b; a = b; b = nx; ++n; }
+  std::cout &lt;&lt; n &lt;&lt; ' ' &lt;&lt; a &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 10</span>
+<span class="c">// Ausgabe: 45 1134903170</span></pre><p>Bei Multiplikation: <code>a * b</code> läuft über, genau wenn <code>a &gt; INT_MAX / b</code> (für <code>a, b &gt; 0</code>).</p><h3>Weitere Tricks</h3><ul><li><b>Multiplikation nur mit Addition:</b> <code>29a = 16a + 8a + 4a + a</code>. Man verdoppelt wiederholt: <code>b = a + a; c = b + b; d = c + c; e = d + d;</code> und rechnet <code>e + d + c + a</code>.</li><li><b>Parität:</b> <code>n % 2 != 0</code> prüft „ungerade“ (nicht <code>n % 2 == 1</code>: für negative <code>n</code> ist der Rest −1).</li><li><b>Teilbarkeit:</b> <code>n % k == 0</code>.</li><li><b>Wochentag aus Datum:</b> Tage seit einem Bezugsdatum (hier 1.1.1900 = Montag) zählen, dann <code>% 7</code>.</li></ul><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">bool</span> schaltjahr(<span class="k">int</span> y) { <span class="k">return</span> y % 4 == 0 &amp;&amp; (y % 100 != 0 || y % 400 == 0); }
+<span class="k">int</span> tage_im_jahr(<span class="k">int</span> y) { <span class="k">return</span> schaltjahr(y) ? 366 : 365; }
+<span class="k">int</span> tage_im_monat(<span class="k">int</span> m, <span class="k">int</span> y) {
+  <span class="k">if</span> (m == 2) <span class="k">return</span> schaltjahr(y) ? 29 : 28;
+  <span class="k">if</span> (m == 4 || m == 6 || m == 9 || m == 11) <span class="k">return</span> 30;
+  <span class="k">return</span> 31;
+}
+
+<span class="c">// PRE: gültiges Datum ab 1.1.1900. POST: Anzahl Tage seit dem 1.1.1900 (ausschliesslich des Datums)</span>
+<span class="k">int</span> tage_seit_1900(<span class="k">int</span> tag, <span class="k">int</span> monat, <span class="k">int</span> jahr) {
+  <span class="k">int</span> t = tag - 1;                                          <span class="c">// volle Tage im aktuellen Monat</span>
+  <span class="k">for</span> (<span class="k">int</span> m = 1; m &lt; monat; ++m) t += tage_im_monat(m, jahr);   <span class="c">// volle Monate dieses Jahres</span>
+  <span class="k">for</span> (<span class="k">int</span> y = 1900; y &lt; jahr; ++y) t += tage_im_jahr(y);        <span class="c">// volle Jahre davor</span>
+  <span class="k">return</span> t;
+}
+
+<span class="k">int</span> main() {
+  <span class="k">const</span> <span class="k">char</span>* name[] = {"montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag", "sonntag"};
+  std::cout &lt;&lt; name[tage_seit_1900(1, 1, 1900) % 7] &lt;&lt; ' ' &lt;&lt; name[tage_seit_1900(21, 11, 2026) % 7] &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: montag samstag</span></pre><h2>12 Typische iterative Algorithmen</h2><div class="box">Cheatsheet: Abschnitt 12</div><p>Viele Aufgaben sind Variationen weniger <b>Muster</b>. Die Muster:</p><ul><li><b>Akkumulieren:</b> eine Variable sammelt (<code>s += x</code>, <code>p *= x</code>). Startwert: 0 bei Summe, 1 bei Produkt.</li><li><b>Zählen:</b> <code>if (Bedingung) ++c;</code></li><li><b>Suchen:</b> früh mit <code>return</code> abbrechen, sobald gefunden. Erst nach der Schleife „nicht gefunden“ melden.</li><li><b>Minimum/Maximum:</b> mit dem <b>ersten Element</b> starten (nicht mit 0!) und mit dem Rest vergleichen.</li><li><b>Flag:</b> <code>bool gefunden = false;</code> wird in der Schleife auf <code>true</code> gesetzt.</li><li><b>Zwei Positionen:</b> zwei Indizes oder Iteratoren (z. B. <code>i &lt; j</code>), oder Vorgänger/Nachfolger (<code>v[i-1]</code>, Start bei <code>i = 1</code>).</li><li><b>Zustand mitführen:</b> z. B. „vorheriger Wert“ und „Länge des aktuellen Laufs“ bei der Run-Length-Kodierung.</li></ul><h3>Primzahlen und ggT</h3><p>Eine Zahl <code>n ≥ 2</code> ist prim, wenn sie keinen Teiler <code>d</code> mit <code>2 ≤ d ≤ √n</code> hat. Statt <code>d &lt;= sqrt(n)</code> schreibt man <code>d * d &lt;= n</code> (ganzzahlig, schnell). Der <b>Euklidische Algorithmus</b> berechnet den ggT über <code>ggT(a, b) = ggT(b, a % b)</code>.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="c">// PRE: -</span>
+<span class="c">// POST: gibt true zurück, genau wenn n eine Primzahl ist</span>
+<span class="k">bool</span> is_prime(<span class="k">int</span> n) {
+  <span class="k">if</span> (n &lt; 2) <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">for</span> (<span class="k">int</span> d = 2; d * d &lt;= n; ++d)       <span class="c">// O(sqrt n)</span>
+    <span class="k">if</span> (n % d == 0) <span class="k">return</span> <span class="k">false</span>;        <span class="c">// Teiler gefunden =&gt; nicht prim</span>
+  <span class="k">return</span> <span class="k">true</span>;
+}
+
+<span class="c">// PRE: a &gt;= 0, b &gt;= 0, nicht beide 0</span>
+<span class="c">// POST: gibt den grössten gemeinsamen Teiler zurück</span>
+<span class="k">int</span> gcd(<span class="k">int</span> a, <span class="k">int</span> b) {
+  <span class="k">while</span> (b != 0) {
+    <span class="k">int</span> t = a % b;                       <span class="c">// (a, b) -&gt; (b, a mod b)</span>
+    a = b;
+    b = t;
+  }
+  <span class="k">return</span> a;
+}
+
+<span class="k">int</span> main() {
+  <span class="k">for</span> (<span class="k">int</span> n = 1; n &lt;= 20; ++n) <span class="k">if</span> (is_prime(n)) std::cout &lt;&lt; n &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n' &lt;&lt; gcd(12, 18) &lt;&lt; ' ' &lt;&lt; gcd(17, 5) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 2 3 5 7 11 13 17 19</span>
+<span class="c">// Ausgabe: 6 1</span></pre><h3>Fibonacci mit Overflow-Schutz</h3><p>Jede Zahl ist die Summe der beiden vorherigen: 0, 1, 1, 2, 3, 5, 8, … Man merkt sich nur die letzten beiden Werte. Bevor man addiert, prüft man, ob die Summe noch in einen <code>int</code> passt.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;climits&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> max_count;
+  std::cin &gt;&gt; max_count;                 <span class="c">// so viele Zahlen wollen wir ausgeben</span>
+  <span class="k">int</span> a = 0, b = 1;                      <span class="c">// F(0), F(1)</span>
+  <span class="k">int</span> count = 0;
+  <span class="k">while</span> (count &lt; max_count) {
+    std::cout &lt;&lt; a &lt;&lt; ' ';
+    ++count;
+    <span class="k">if</span> (a &gt; INT_MAX - b) <span class="k">break</span>;          <span class="c">// a + b würde überlaufen =&gt; aufhören</span>
+    <span class="k">int</span> next = a + b;
+    a = b;
+    b = next;
+  }
+  std::cout &lt;&lt; "\nAusgegeben: " &lt;&lt; count &lt;&lt; '\n';
+}
+<span class="c">// Eingabe: 10</span>
+<span class="c">// Ausgabe: 0 1 1 2 3 5 8 13 21 34</span>
+<span class="c">// Ausgabe: Ausgegeben: 10</span></pre><p>Variante „Fibonacci-Primzahlen bis <code>m</code>“: dieselbe Schleife, aber nur Zahlen ausgeben, die <code>is_prime</code> erfüllen.</p><h3>Maximum, Zählen, Prüfen</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// PRE: v nicht leer</span>
+<span class="k">int</span> max_of(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v) {
+  <span class="k">int</span> m = v[0];                          <span class="c">// Start mit dem ersten Element</span>
+  <span class="k">for</span> (<span class="k">int</span> x : v)
+    <span class="k">if</span> (x &gt; m) m = x;
+  <span class="k">return</span> m;
+}
+
+<span class="c">// POST: true, genau wenn v aufsteigend sortiert ist</span>
+<span class="k">bool</span> is_sorted(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v) {
+  <span class="k">for</span> (<span class="k">int</span> i = 1; i &lt; std::ssize(v); ++i)
+    <span class="k">if</span> (v[i] &lt; v[i - 1]) <span class="k">return</span> <span class="k">false</span>;   <span class="c">// ein Gegenbeispiel genügt</span>
+  <span class="k">return</span> <span class="k">true</span>;                           <span class="c">// keins gefunden =&gt; sortiert</span>
+}
+
+<span class="c">// POST: v ist umgekehrt</span>
+<span class="k">void</span> reverse_vec(std::vector&lt;<span class="k">int</span>&gt;&amp; v) {
+  <span class="k">for</span> (<span class="k">int</span> i = 0, j = std::ssize(v) - 1; i &lt; j; ++i, --j)   <span class="c">// zwei Zeiger von aussen nach innen</span>
+    std::swap(v[i], v[j]);
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {3, 9, 2, 7};
+  std::cout &lt;&lt; max_of(v) &lt;&lt; ' ' &lt;&lt; is_sorted(v) &lt;&lt; ' ' &lt;&lt; is_sorted({1, 2, 2, 5}) &lt;&lt; '\n';
+  reverse_vec(v);
+  <span class="k">for</span> (<span class="k">int</span> x : v) std::cout &lt;&lt; x &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 9 0 1</span>
+<span class="c">// Ausgabe: 7 2 9 3</span></pre><h3>Sortieren</h3><p><b>Bubble Sort:</b> Vergleicht benachbarte Elemente und tauscht sie, wenn sie in der falschen Reihenfolge stehen. Das wiederholt man, bis ein ganzer Durchlauf nichts mehr getauscht hat. Nach <code>k</code> Durchläufen stehen die <code>k</code> grössten Elemente an ihrem Platz (Invariante). Terminierung: nach höchstens <code>n</code> Durchläufen. Laufzeit O(n²).</p><p><b>Selection Sort:</b> Sucht in jedem Schritt das Minimum des Rests und tauscht es nach vorn.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// POST: v ist aufsteigend sortiert</span>
+<span class="k">void</span> bubble_sort(std::vector&lt;<span class="k">int</span>&gt;&amp; v) {
+  <span class="k">bool</span> swapped;
+  <span class="k">do</span> {
+    swapped = <span class="k">false</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = 1; i &lt; std::ssize(v); ++i) {
+      <span class="k">if</span> (v[i] &lt; v[i - 1]) {
+        std::swap(v[i], v[i - 1]);
+        swapped = <span class="k">true</span>;                  <span class="c">// es hat sich etwas geändert =&gt; noch ein Durchlauf</span>
+      }
+    }
+  } <span class="k">while</span> (swapped);
+}
+
+<span class="k">void</span> selection_sort(std::vector&lt;<span class="k">int</span>&gt;&amp; v) {
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i + 1 &lt; std::ssize(v); ++i) {
+    <span class="k">int</span> m = i;                           <span class="c">// Index des kleinsten Elements im Rest [i, n)</span>
+    <span class="k">for</span> (<span class="k">int</span> j = i + 1; j &lt; std::ssize(v); ++j)
+      <span class="k">if</span> (v[j] &lt; v[m]) m = j;
+    std::swap(v[i], v[m]);
+  }
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; a = {5, 2, 9, 1, 5}, b = a;
+  bubble_sort(a);
+  selection_sort(b);
+  <span class="k">for</span> (<span class="k">int</span> x : a) std::cout &lt;&lt; x &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n';
+  <span class="k">for</span> (<span class="k">int</span> x : b) std::cout &lt;&lt; x &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 1 2 5 5 9</span>
+<span class="c">// Ausgabe: 1 2 5 5 9</span></pre><p>Im Beispiel „Sorting by Swapping“ der Übungen wird absteigend sortiert: dasselbe Programm mit <code>&gt;</code> statt <code>&lt;</code>.</p><h3>Binärsuche</h3><p>Auf einem <b>sortierten</b> Vektor halbiert man den Suchbereich <code>[lo, hi]</code> in jedem Schritt: Mittelwert prüfen, links oder rechts weitersuchen. Laufzeit O(log n).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// PRE: v aufsteigend sortiert</span>
+<span class="c">// POST: gibt einen Index i mit v[i] == x zurück, sonst -1</span>
+<span class="k">int</span> binary_search(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v, <span class="k">int</span> x) {
+  <span class="k">int</span> lo = 0, hi = std::ssize(v) - 1;
+  <span class="k">while</span> (lo &lt;= hi) {
+    <span class="k">int</span> mid = lo + (hi - lo) / 2;        <span class="c">// vermeidet Overflow von lo + hi</span>
+    <span class="k">if</span> (v[mid] == x) <span class="k">return</span> mid;
+    <span class="k">else</span> <span class="k">if</span> (v[mid] &lt; x) lo = mid + 1;   <span class="c">// x kann nur rechts sein</span>
+    <span class="k">else</span> hi = mid - 1;                   <span class="c">// x kann nur links sein</span>
+  }
+  <span class="k">return</span> -1;
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {1, 3, 5, 7, 9, 11};
+  std::cout &lt;&lt; binary_search(v, 7) &lt;&lt; ' ' &lt;&lt; binary_search(v, 4) &lt;&lt; ' ' &lt;&lt; binary_search(v, 1) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 3 -1 0</span></pre><h3>Paare mit gegebener Summe</h3><p>Zähle alle Paare <code>(i, j)</code> mit <code>i &lt; j</code> und <code>v[i] + v[j] == sum</code>. Mit Iteratoren: zwei verschachtelte Schleifen, die innere beginnt hinter der äusseren Position (so wird kein Paar doppelt gezählt). O(n²).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">using</span> iterator = std::vector&lt;<span class="k">int</span>&gt;::const_iterator;
+
+<span class="c">// PRE: für alle i, j gilt v[i] + v[j] &lt;= INT_MAX</span>
+<span class="c">// POST: gibt die Anzahl Paare (i &lt; j) im Bereich [begin, end) mit Summe sum zurück</span>
+<span class="k">int</span> pairs_with_sum(<span class="k">int</span> sum, iterator begin, iterator end) {
+  <span class="k">int</span> c = 0;
+  <span class="k">for</span> (iterator i = begin; i != end; ++i)
+    <span class="k">for</span> (iterator j = i + 1; j != end; ++j)
+      <span class="k">if</span> (*i + *j == sum) ++c;
+  <span class="k">return</span> c;
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {1, 7, 2, 6, 6};
+  std::cout &lt;&lt; pairs_with_sum(8, v.begin(), v.end()) &lt;&lt; '\n';   <span class="c">// (1,7), (2,6), (2,6)</span>
+}
+<span class="c">// Ausgabe: 3</span></pre><h3>Run-Length-Kodierung</h3><p>Eine Folge gleicher Werte wird durch (Länge, Wert) ersetzt: <code>1 1 1 2 2 3</code> → <code>3 1 2 2 1 3</code>. Man merkt sich den vorherigen Wert und die Länge des laufenden Laufs. Wechselt der Wert (oder ist die Maximallänge 255 erreicht), gibt man den Lauf aus und beginnt einen neuen. <b>Den letzten Lauf nicht vergessen:</b> er wird nach der Schleife ausgegeben.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> prev;
+  std::cin &gt;&gt; prev;
+  <span class="k">if</span> (prev == -1) <span class="k">return</span> 0;                    <span class="c">// leere Folge</span>
+  <span class="k">int</span> len = 1, x;
+  <span class="k">while</span> (std::cin &gt;&gt; x &amp;&amp; x != -1) {           <span class="c">// -1 beendet die Eingabe</span>
+    <span class="k">if</span> (x != prev || len == 255) {             <span class="c">// Lauf zu Ende</span>
+      std::cout &lt;&lt; len &lt;&lt; ' ' &lt;&lt; prev &lt;&lt; ' ';
+      len = 1;
+      prev = x;
+    } <span class="k">else</span> {
+      ++len;                                   <span class="c">// Lauf wird länger</span>
+    }
+  }
+  std::cout &lt;&lt; len &lt;&lt; ' ' &lt;&lt; prev &lt;&lt; '\n';     <span class="c">// letzter Lauf</span>
+}
+<span class="c">// Eingabe: 1 1 1 2 2 3 -1</span>
+<span class="c">// Ausgabe: 3 1 2 2 1 3</span></pre><p>Dekodieren: lies Paare <code>(len, val)</code> und gib <code>len</code>-mal <code>val</code> aus (<code>for (int i = 0; i &lt; len; ++i) std::cout &lt;&lt; val &lt;&lt; ' ';</code>).</p><h3>Sieb des Eratosthenes und Collatz</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// POST: p[k] == true, genau wenn k prim ist (0 &lt;= k &lt;= n); PRE: n &gt;= 1</span>
+std::vector&lt;<span class="k">bool</span>&gt; sieve(<span class="k">int</span> n) {
+  std::vector&lt;<span class="k">bool</span>&gt; p(n + 1, <span class="k">true</span>);
+  p[0] = p[1] = <span class="k">false</span>;
+  <span class="k">for</span> (<span class="k">int</span> i = 2; i * i &lt;= n; ++i)
+    <span class="k">if</span> (p[i])
+      <span class="k">for</span> (<span class="k">int</span> j = i * i; j &lt;= n; j += i) p[j] = <span class="k">false</span>;   <span class="c">// alle Vielfachen streichen</span>
+  <span class="k">return</span> p;
+}
+
+<span class="c">// PRE: n &gt;= 1; POST: Anzahl Schritte bis die Folge bei 1 ankommt</span>
+<span class="k">int</span> collatz(<span class="k">int</span> n) {
+  <span class="k">int</span> steps = 0;
+  <span class="k">while</span> (n != 1) {
+    n = n % 2 == 0 ? n / 2 : 3 * n + 1;
+    ++steps;
+  }
+  <span class="k">return</span> steps;
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">bool</span>&gt; p = sieve(30);
+  <span class="k">for</span> (<span class="k">int</span> k = 0; k &lt;= 30; ++k) <span class="k">if</span> (p[k]) std::cout &lt;&lt; k &lt;&lt; ' ';
+  std::cout &lt;&lt; '\n' &lt;&lt; collatz(6) &lt;&lt; '\n';      <span class="c">// 6 3 10 5 16 8 4 2 1  =&gt; 8 Schritte</span>
+}
+<span class="c">// Ausgabe: 2 3 5 7 11 13 17 19 23 29</span>
+<span class="c">// Ausgabe: 8</span></pre><p><b>Laufzeit-Faustregeln:</b> eine Schleife über <code>n</code> Elemente O(n) · zwei ineinander O(n²) · Halbieren (Binärsuche) O(log n) · Teilersuche bis √n O(√n).</p><h2>13 Rekursion</h2><div class="box">Cheatsheet: Abschnitt 13. Die meisten Prüfungsaufgaben zur Rekursion sind Variationen der Beispiele hier.</div><h3>Was passiert bei einem rekursiven Aufruf?</h3><p>Eine <b>rekursive Funktion</b> ruft sich selbst mit einem <b>kleineren</b> Problem auf. Jeder Aufruf hat seine eigenen Parameter und lokalen Variablen. Die Aufrufe stapeln sich (*Call Stack*), bis ein Aufruf den <b>Basisfall</b> erreicht und ohne weiteren Selbstaufruf zurückkehrt. Danach werden die wartenden Aufrufe von innen nach aussen fertig berechnet.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;string&gt;
+
+<span class="k">int</span> fact(<span class="k">int</span> n, <span class="k">int</span> tiefe = 0) {                  <span class="c">// tiefe: nur für die eingerückte Ausgabe</span>
+  std::string einzug(2 * tiefe, ' ');
+  std::cout &lt;&lt; einzug &lt;&lt; "fact(" &lt;&lt; n &lt;&lt; ")\n";
+  <span class="k">if</span> (n &lt;= 1) <span class="k">return</span> 1;                           <span class="c">// Basisfall</span>
+  <span class="k">int</span> r = n * fact(n - 1, tiefe + 1);             <span class="c">// Rekursionsschritt</span>
+  std::cout &lt;&lt; einzug &lt;&lt; "= " &lt;&lt; r &lt;&lt; '\n';
+  <span class="k">return</span> r;
+}
+
+<span class="k">int</span> main() { fact(3); }
+<span class="c">// Ausgabe: fact(3)</span>
+<span class="c">// Ausgabe:   fact(2)</span>
+<span class="c">// Ausgabe:     fact(1)</span>
+<span class="c">// Ausgabe:   = 2</span>
+<span class="c">// Ausgabe: = 6</span></pre><p><code>fact(3)</code> wartet auf <code>fact(2)</code>, das auf <code>fact(1)</code> wartet. <code>fact(1)</code> liefert 1, <code>fact(2)</code> rechnet <code>2·1 = 2</code>, <code>fact(3)</code> rechnet <code>3·2 = 6</code>.</p><h3>Das Rezept</h3><pre>Ergebnis f(Parameter) {
+  <span class="k">if</span> (Basisfall)  <span class="k">return</span> einfacher_Wert;     <span class="c">// 1. Wann ist das Problem trivial?</span>
+  ... f(kleineres_Problem) ...               <span class="c">// 2. Wie führe ich es auf ein kleineres zurück?</span>
+}</pre><p>1. <b>Basisfall(e)</b> festlegen (z. B. <code>n == 0</code>, leerer Vektor, <code>lo &gt; hi</code>).</p><p>2. <b>Rekursionsschritt:</b> das Problem auf ein kleineres zurückführen und die Teillösung nutzen.</p><p>3. <b>Terminierung</b> zeigen: Das Argument wird bei <b>jedem</b> Aufruf <b>strikt kleiner</b> (<code>n - 1</code>, <code>n / 2</code>, ein schrumpfendes Intervall) und erreicht damit den Basisfall, in <b>jedem</b> Zweig (auch bei zwei rekursiven Aufrufen).</p><p>4. <b>PRE/POST</b> formulieren und annehmen, dass der rekursive Aufruf sie erfüllt (Induktion). Daraus folgt die POST der ganzen Funktion.</p><h3>Zahlen: Fakultät, Potenz, ggT, Fibonacci</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="c">// PRE: n &gt;= 0;  POST: gibt n! zurück</span>
+<span class="k">int</span> fact(<span class="k">int</span> n) { <span class="k">return</span> n &lt;= 1 ? 1 : n * fact(n - 1); }
+
+<span class="c">// PRE: b^e passt in int;  POST: gibt b^e zurück. Halbiert den Exponenten =&gt; O(log e) Aufrufe</span>
+<span class="k">int</span> power(<span class="k">int</span> b, <span class="k">int</span> e) {
+  <span class="k">if</span> (e == 0) <span class="k">return</span> 1;
+  <span class="k">int</span> h = power(b, e / 2);               <span class="c">// b^(e/2) EINMAL berechnen und wiederverwenden</span>
+  <span class="k">return</span> e % 2 == 0 ? h * h : h * h * b;
+}
+
+<span class="c">// PRE: a, b &gt;= 0, nicht beide 0;  POST: gibt den ggT zurück (Euklid)</span>
+<span class="k">int</span> gcd(<span class="k">int</span> a, <span class="k">int</span> b) { <span class="k">return</span> b == 0 ? a : gcd(b, a % b); }
+
+<span class="c">// PRE: n &gt;= 0;  POST: gibt die n-te Fibonacci-Zahl zurück (F0 = 0, F1 = 1)</span>
+<span class="k">int</span> fib(<span class="k">int</span> n) { <span class="k">return</span> n &lt; 2 ? n : fib(n - 1) + fib(n - 2); }
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; fact(5) &lt;&lt; ' ' &lt;&lt; power(2, 10) &lt;&lt; ' ' &lt;&lt; power(3, 5) &lt;&lt; ' ' &lt;&lt; gcd(12, 18) &lt;&lt; ' ' &lt;&lt; fib(10) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 120 1024 243 6 55</span></pre><p><code>power</code>: <code>2^10 = (2^5)²</code>, <code>2^5 = (2^2)²·2</code>, <code>2^2 = (2^1)²</code>, <code>2^1 = (2^0)²·2</code>: nur 5 Aufrufe statt 10.</p><h3>Ziffern und Ausgabe-Reihenfolge</h3><p>Wann man etwas ausgibt, <b>vor</b> oder <b>nach</b> dem rekursiven Aufruf, bestimmt die Reihenfolge der Ausgabe.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="c">// PRE: n &gt;= 0;  POST: gibt die Ziffern von n in umgekehrter Reihenfolge aus</span>
+<span class="k">void</span> reverse_digits(<span class="k">int</span> n) {
+  <span class="k">if</span> (n &lt; 10) {
+    std::cout &lt;&lt; n;                      <span class="c">// Basisfall: eine Ziffer</span>
+  } <span class="k">else</span> {
+    std::cout &lt;&lt; n % 10;                 <span class="c">// ZUERST die letzte Ziffer ausgeben ...</span>
+    reverse_digits(n / 10);              <span class="c">// ... dann den Rest (ohne letzte Ziffer)</span>
+  }
+}
+
+<span class="c">// PRE: n &gt;= 1;  POST: gibt n im Binärsystem aus (höchstes Bit zuerst)</span>
+<span class="k">void</span> print_bin(<span class="k">int</span> n) {
+  <span class="k">if</span> (n &gt; 1) print_bin(n / 2);           <span class="c">// ZUERST die höheren Bits ...</span>
+  std::cout &lt;&lt; n % 2;                    <span class="c">// ... DANN das letzte Bit =&gt; richtige Reihenfolge</span>
+}
+
+<span class="k">void</span> print_bin_rev(<span class="k">int</span> n) {              <span class="c">// dieselben Zeilen vertauscht: umgekehrte Reihenfolge</span>
+  std::cout &lt;&lt; n % 2;
+  <span class="k">if</span> (n &gt; 1) print_bin_rev(n / 2);
+}
+
+<span class="c">// PRE: n &gt;= 0;  POST: gibt die Ziffernsumme zurück</span>
+<span class="k">int</span> digit_sum(<span class="k">int</span> n) { <span class="k">return</span> n &lt; 10 ? n : n % 10 + digit_sum(n / 10); }
+
+<span class="k">int</span> main() {
+  reverse_digits(1234); std::cout &lt;&lt; '\n';
+  print_bin(10); std::cout &lt;&lt; '\n';
+  print_bin_rev(10); std::cout &lt;&lt; '\n';
+  std::cout &lt;&lt; digit_sum(1234) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 4321</span>
+<span class="c">// Ausgabe: 1010</span>
+<span class="c">// Ausgabe: 0101</span>
+<span class="c">// Ausgabe: 10</span></pre><p><b>Merke:</b> Ausgabe vor dem Aufruf: Reihenfolge wie die Aufrufe kommen. Ausgabe nach dem Aufruf: umgekehrt (der innerste Aufruf gibt zuerst aus).</p><h3>Vektoren und Strings rekursiv</h3><p>Hier arbeitet man mit einem <b>Index</b>, der Richtung Ende läuft, oder mit einem schrumpfenden Bereich.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;string&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// PRE: i &lt;= v.size();  POST: Summe von v[i], ..., v[size-1]</span>
+<span class="k">int</span> rsum(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v, <span class="k">int</span> i) {
+  <span class="k">return</span> i == std::ssize(v) ? 0 : v[i] + rsum(v, i + 1);
+}
+
+<span class="c">// PRE: i &lt; v.size();  POST: grösstes Element ab Index i</span>
+<span class="k">int</span> rmax(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v, <span class="k">int</span> i) {
+  <span class="k">if</span> (i == std::ssize(v) - 1) <span class="k">return</span> v[i];            <span class="c">// Basisfall: letztes Element</span>
+  <span class="k">return</span> std::max(v[i], rmax(v, i + 1));
+}
+
+<span class="c">// POST: true, genau wenn s[l..r] ein Palindrom ist</span>
+<span class="k">bool</span> is_pal(<span class="k">const</span> std::string&amp; s, <span class="k">int</span> l, <span class="k">int</span> r) {
+  <span class="k">return</span> l &gt;= r || (s[l] == s[r] &amp;&amp; is_pal(s, l + 1, r - 1));   <span class="c">// aussen vergleichen, dann innen</span>
+}
+
+<span class="c">// POST: gibt s rückwärts zurück</span>
+std::string rev(<span class="k">const</span> std::string&amp; s) { <span class="k">return</span> s.empty() ? "" : rev(s.substr(1)) + s[0]; }
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {3, 9, 2};
+  std::cout &lt;&lt; rsum(v, 0) &lt;&lt; ' ' &lt;&lt; rmax(v, 0) &lt;&lt; ' ' &lt;&lt; is_pal("anna", 0, 3) &lt;&lt; is_pal("abc", 0, 2) &lt;&lt; ' ' &lt;&lt; rev("abc") &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 14 9 10 cba</span></pre><h3>Binärsuche rekursiv</h3><p>Der Suchbereich <code>[lo, hi]</code> wird kleiner, bis er leer ist (<code>lo &gt; hi</code>, Basisfall „nicht gefunden“).</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="c">// PRE: v aufsteigend sortiert;  POST: Index von x in v[lo..hi] oder -1</span>
+<span class="k">int</span> bsearch_rec(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v, <span class="k">int</span> x, <span class="k">int</span> lo, <span class="k">int</span> hi) {
+  <span class="k">if</span> (lo &gt; hi) <span class="k">return</span> -1;                         <span class="c">// leerer Bereich</span>
+  <span class="k">int</span> m = lo + (hi - lo) / 2;
+  <span class="k">if</span> (v[m] == x) <span class="k">return</span> m;
+  <span class="k">return</span> v[m] &lt; x ? bsearch_rec(v, x, m + 1, hi)  <span class="c">// rechts weitersuchen</span>
+                  : bsearch_rec(v, x, lo, m - 1); <span class="c">// links weitersuchen</span>
+}
+
+<span class="k">int</span> main() {
+  std::vector&lt;<span class="k">int</span>&gt; v = {1, 3, 5, 7, 9};
+  std::cout &lt;&lt; bsearch_rec(v, 7, 0, 4) &lt;&lt; ' ' &lt;&lt; bsearch_rec(v, 4, 0, 4) &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 3 -1</span></pre><h3>Zwei rekursive Aufrufe: Türme von Hanoi, Teilmengen, Permutationen</h3><p>Wenn eine Funktion sich mehrfach aufruft, entsteht ein <b>Aufrufbaum</b>. Typisch für Kombinatorik.</p><p><b>Türme von Hanoi:</b> n Scheiben von <code>from</code> nach <code>to</code>, mit Hilfsstab <code>via</code>. Um n Scheiben zu verschieben, schiebt man zuerst n−1 Scheiben auf den Hilfsstab, dann die grösste ans Ziel, dann die n−1 vom Hilfsstab ans Ziel. Das ergibt 2ⁿ−1 Züge.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+<span class="p">#include</span> &lt;string&gt;
+<span class="p">#include</span> &lt;vector&gt;
+
+<span class="k">void</span> hanoi(<span class="k">int</span> n, <span class="k">char</span> from, <span class="k">char</span> via, <span class="k">char</span> to, <span class="k">int</span>&amp; moves) {
+  <span class="k">if</span> (n == 0) <span class="k">return</span>;
+  hanoi(n - 1, from, to, via, moves);             <span class="c">// n-1 Scheiben auf den Hilfsstab</span>
+  ++moves;                                        <span class="c">// grösste Scheibe: from -&gt; to</span>
+  hanoi(n - 1, via, from, to, moves);             <span class="c">// n-1 Scheiben vom Hilfsstab ans Ziel</span>
+}
+
+<span class="c">// POST: gibt alle Permutationen der Zeichen von rest aus, jeweils mit Präfix pre</span>
+<span class="k">void</span> perms(std::string rest, std::string pre) {
+  <span class="k">if</span> (rest.empty()) { std::cout &lt;&lt; pre &lt;&lt; ' '; <span class="k">return</span>; }
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; std::ssize(rest); ++i) {
+    std::string r = rest;
+    r.erase(i, 1);                                <span class="c">// Zeichen i wählen ...</span>
+    perms(r, pre + rest[i]);                      <span class="c">// ... und mit dem Rest weitermachen</span>
+  }
+}
+
+<span class="c">// POST: gibt alle Teilmengen von v[i..] (zusammen mit den schon gewählten in cur) aus</span>
+<span class="k">void</span> subsets(<span class="k">const</span> std::vector&lt;<span class="k">int</span>&gt;&amp; v, <span class="k">int</span> i, std::vector&lt;<span class="k">int</span>&gt;&amp; cur) {
+  <span class="k">if</span> (i == std::ssize(v)) {                       <span class="c">// alle Elemente entschieden</span>
+    std::cout &lt;&lt; '{';
+    <span class="k">for</span> (<span class="k">int</span> x : cur) std::cout &lt;&lt; x;
+    std::cout &lt;&lt; "} ";
+    <span class="k">return</span>;
+  }
+  subsets(v, i + 1, cur);                         <span class="c">// v[i] weglassen</span>
+  cur.push_back(v[i]);
+  subsets(v, i + 1, cur);                         <span class="c">// v[i] nehmen</span>
+  cur.pop_back();                                 <span class="c">// wieder rückgängig machen (Backtracking)</span>
+}
+
+<span class="k">int</span> main() {
+  <span class="k">int</span> moves = 0;
+  hanoi(3, 'A', 'B', 'C', moves);
+  std::cout &lt;&lt; moves &lt;&lt; '\n';
+  perms("abc", "");
+  std::cout &lt;&lt; '\n';
+  std::vector&lt;<span class="k">int</span>&gt; cur;
+  subsets({1, 2, 3}, 0, cur);
+  std::cout &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 7</span>
+<span class="c">// Ausgabe: abc acb bac bca cab cba</span>
+<span class="c">// Ausgabe: {} {3} {2} {23} {1} {13} {12} {123}</span></pre><h3>Aufrufe zählen (Analyse-Aufgabe)</h3><p>Typische Frage: „Wie oft wird <code>f</code> aufgerufen, in Abhängigkeit von <code>n</code>?“ Man zählt inklusive des ersten (nicht rekursiven) Aufrufs. Hier wird zum Prüfen ein Zähler mitgeführt:</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">int</span> aufrufe = 0;
+
+<span class="c">// PRE: n &gt;= 0;  POST: gibt true zurück, genau wenn n ungerade ist</span>
+<span class="k">bool</span> f(<span class="k">int</span> n) {
+  ++aufrufe;
+  <span class="k">if</span> (n == 0) <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">return</span> !f(n - 1);                      <span class="c">// ein rekursiver Aufruf, n schrumpft um 1</span>
+}
+
+<span class="c">// PRE: n &gt;= 0;  POST: 2^n Sterne wurden ausgegeben</span>
+<span class="k">void</span> g(<span class="k">int</span> n) {
+  ++aufrufe;
+  <span class="k">if</span> (n == 0) { std::cout &lt;&lt; '*'; <span class="k">return</span>; }
+  g(n - 1);                              <span class="c">// ZWEI rekursive Aufrufe</span>
+  g(n - 1);
+}
+
+<span class="k">int</span> main() {
+  f(5);
+  std::cout &lt;&lt; aufrufe &lt;&lt; '\n';          <span class="c">// n + 1 = 6</span>
+  aufrufe = 0;
+  g(3);
+  std::cout &lt;&lt; ' ' &lt;&lt; aufrufe &lt;&lt; '\n';   <span class="c">// 2^(n+1) - 1 = 15</span>
+}
+<span class="c">// Ausgabe: 6</span>
+<span class="c">// Ausgabe: ******** 15</span></pre><p>Warum?</p><ul><li>**<code>f</code>:** <code>Calls(0) = 1</code> und <code>Calls(n) = 1 + Calls(n−1)</code>. Also <code>Calls(n) = n + 1</code>.</li><li>**<code>g</code>:** <code>Calls(0) = 1</code> und <code>Calls(n) = 1 + 2·Calls(n−1)</code>. Aufgelöst: <code>1 + 2 + 4 + … + 2ⁿ = 2ⁿ⁺¹ − 1</code>. Im Aufrufbaum hat Ebene <code>i</code> genau 2ⁱ Knoten.</li><li>**Terminierung von <code>f</code> und <code>g</code>:** Bei jedem Aufruf wird <code>n</code> um 1 kleiner und erreicht <code>0</code> (bei <code>g</code> in beiden Zweigen), dort enden die Aufrufe.</li><li><b>Halbierung</b> (<code>f(n/2)</code>): ⌊log₂ n⌋ + 1 Aufrufe.</li><li>**<code>fib</code> naiv:** ruft zweimal mit fast gleichem Argument auf, daher exponentiell (ca. 1.6ⁿ): <code>Calls(n) = 2·F(n+1) − 1</code>.</li></ul><h3>Memoization: wiederholte Arbeit sparen</h3><p>Beim naiven <code>fib</code> wird dieselbe Teilaufgabe tausendfach neu berechnet. Merkt man sich bereits berechnete Werte (Memoization), reicht ein Aufruf pro Wert.</p><pre><span class="p">#include</span> &lt;iostream&gt;
+
+long long calls_naive = 0, calls_memo = 0;
+long long memo[100];                              <span class="c">// 0 = noch nicht berechnet</span>
+
+long long fib(<span class="k">int</span> n) {
+  ++calls_naive;
+  <span class="k">return</span> n &lt; 2 ? n : fib(n - 1) + fib(n - 2);
+}
+
+long long fibm(<span class="k">int</span> n) {
+  ++calls_memo;
+  <span class="k">if</span> (n &lt; 2) <span class="k">return</span> n;
+  <span class="k">if</span> (memo[n] != 0) <span class="k">return</span> memo[n];               <span class="c">// schon bekannt: sofort zurück</span>
+  <span class="k">return</span> memo[n] = fibm(n - 1) + fibm(n - 2);     <span class="c">// berechnen und merken</span>
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; fib(30) &lt;&lt; ' ' &lt;&lt; calls_naive &lt;&lt; '\n';
+  std::cout &lt;&lt; fibm(30) &lt;&lt; ' ' &lt;&lt; calls_memo &lt;&lt; '\n';
+}
+<span class="c">// Ausgabe: 832040 2692537</span>
+<span class="c">// Ausgabe: 832040 59</span></pre><h3>Gegenseitige Rekursion, Pascal-Dreieck, Dreieck zeichnen</h3><pre><span class="p">#include</span> &lt;iostream&gt;
+
+<span class="k">bool</span> odd(<span class="k">int</span> n);                                   <span class="c">// Vorwärtsdeklaration, weil sich beide brauchen</span>
+<span class="k">bool</span> even(<span class="k">int</span> n) { <span class="k">return</span> n == 0 ? <span class="k">true</span> : odd(n - 1); }
+<span class="k">bool</span> odd(<span class="k">int</span> n)  { <span class="k">return</span> n == 0 ? <span class="k">false</span> : even(n - 1); }
+
+<span class="c">// POST: gibt "n über k" zurück (Summe der beiden Einträge darüber im Pascal-Dreieck)</span>
+<span class="k">int</span> binom(<span class="k">int</span> n, <span class="k">int</span> k) {
+  <span class="k">if</span> (k == 0 || k == n) <span class="k">return</span> 1;
+  <span class="k">return</span> binom(n - 1, k - 1) + binom(n - 1, k);
+}
+
+<span class="c">// POST: gibt n Zeilen aus, Zeile i hat i Sterne</span>
+<span class="k">void</span> triangle(<span class="k">int</span> n) {
+  <span class="k">if</span> (n == 0) <span class="k">return</span>;
+  triangle(n - 1);                                 <span class="c">// zuerst die kleineren Zeilen</span>
+  <span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; n; ++i) std::cout &lt;&lt; '*';
+  std::cout &lt;&lt; '\n';
+}
+
+<span class="k">int</span> main() {
+  std::cout &lt;&lt; even(10) &lt;&lt; odd(10) &lt;&lt; ' ' &lt;&lt; binom(5, 2) &lt;&lt; '\n';
+  triangle(3);
+}
+<span class="c">// Ausgabe: 10 10</span>
+<span class="c">// Ausgabe: *</span>
+<span class="c">// Ausgabe: **</span>
+<span class="c">// Ausgabe: ***</span></pre><h3>Typische Fehler bei Rekursion</h3><pre><span class="k">int</span> bad(<span class="k">int</span> n) {
+  <span class="k">return</span> n * bad(n - 1);          <span class="c">// FEHLER: kein Basisfall =&gt; endlose Rekursion =&gt; Stack Overflow</span>
+}
+<span class="k">int</span> bad2(<span class="k">int</span> n) {
+  <span class="k">if</span> (n == 0) <span class="k">return</span> 1;
+  <span class="k">return</span> bad2(n + 1);             <span class="c">// FEHLER: Argument nähert sich dem Basisfall nicht</span>
+}
+<span class="k">int</span> bad3(<span class="k">int</span> n) {
+  <span class="k">if</span> (n == 0) <span class="k">return</span> 1;
+  <span class="k">return</span> n * bad3(n - 1);         <span class="c">// FEHLER bei n &lt; 0: Basisfall wird übersprungen (PRE n &gt;= 0 fehlt)</span>
+}</pre><p>Jede Rekursionsebene belegt Speicher auf dem Stack. Bei sehr tiefer Rekursion (grob 10⁵–10⁶ Ebenen) bricht das Programm ab (*Stack Overflow*). Jede Rekursion lässt sich auch mit einer Schleife schreiben (z. B. <code>gcd</code>, Fakultät). Umgekehrt ist Rekursion oft die einfachere Lösung (Hanoi, Permutationen).</p><h2>14 Vorgehen nach Aufgabentyp</h2><div class="box">Cheatsheet: Abschnitt 14</div><h3>Ausdruck bewerten, gültig?</h3><p>Beispiel aus den Übungen. Bei <code>int a = 1, b = 2;</code> sei der Ausdruck <code>++a + b++</code>:</p><p>1. Klammern nach Präzedenz: <code>(++a) + (b++)</code> (Postfix und Präfix binden stärker als <code>+</code>).</p><p>2. Typen: beide Operanden sind <code>int</code>, das Ergebnis ist ein <code>int</code>. Es ist ein <b>r-value</b> (Ergebnis einer Addition).</p><p>3. Wert: <code>++a</code> ergibt 2, <code>b++</code> liefert den alten Wert 2, also <code>4</code>. Danach ist <code>b == 3</code>.</p><p>Bei „ist der Ausdruck gültig?“ prüft man: Syntax vollständig? Steht links von <code>=</code> ein l-value? Passen die Typen?</p><h3>Text in Bedingung übersetzen</h3><p>Zerlege den Satz in Teile, übersetze jedes Teil, verbinde sie (siehe Tabelle in Abschnitt 2). Teste mit Zahlen an der Grenze: gilt „höchstens 5-mal“ für <code>a == 5 * b</code>? Ja, also <code>&lt;=</code>.</p><h3>Funktion reparieren</h3><p>Vorgehen mit den vier Fragen aus Abschnitt 4. Typische Auflösung: fehlendes <code>return</code> ergänzen, Variable initialisieren, PRE ergänzen oder einen Sonderwert zurückgeben.</p><h3>PRE/POST formulieren</h3><p>Rechne kleine Beispiele durch (Eingaben 0, 1, 2, negativ). Beantworte dann: <b>Wann</b> ist die Funktion überhaupt sinnvoll definiert (PRE)? <b>Was</b> liefert sie, und was tut sie sonst noch (POST)? Beispiel: <code>int f(int n) { int i = 0; while (n &gt; 0) { n /= 10; ++i; } return i; }</code>. Rechne <code>f(0) = 0</code> (nicht 1!), <code>f(5) = 1</code>, <code>f(123) = 3</code>. Für <code>n &gt; 0</code> ist das die Stellenzahl. Eine PRE <code>n &gt; 0</code> ist darum sinnvoll, POST: „gibt die Anzahl Dezimalstellen von <code>n</code> zurück“.</p><h3>Ein Programm schreiben</h3><p>1. Aufgabe lesen: Welche <b>Eingabe</b> (Format!), welche <b>Ausgabe</b> (Format!)?</p><p>2. In kleine Funktionen mit PRE/POST zerlegen (Einlesen, Rechnen, Ausgeben).</p><p>3. <code>main</code> schreibt nur den Ablauf.</p><p>4. Mit den Beispielen aus der Aufgabe testen, danach mit Randfällen (leer, 0, 1, grosse Werte).</p><h3>Klasse implementieren</h3><p>Member <code>private</code> und mit Standardwert, nur sinnvolle Methoden <code>public</code>, Methoden die nichts ändern <code>const</code>, bei getrennten Dateien <code>Klasse::methode</code> in der <code>.cpp</code>. Gefordert Operatoren: siehe Abschnitt 9.</p><h3>Rekursive Funktion analysieren (Muster einer Prüfungsaufgabe)</h3><p>Gegeben: <code>bool f(int n) { if (n == 0) return false; return !f(n - 1); }</code></p><ul><li><b>i) PRE/POST:</b> PRE <code>n &gt;= 0</code>. POST: gibt <code>true</code> zurück, genau wenn <code>n</code> ungerade ist.</li><li><b>ii) Terminierung:</b> Für <code>n == 0</code> endet die Funktion sofort. Bei jedem rekursiven Aufruf wird <code>n</code> um 1 kleiner, erreicht also nach <code>n</code> Schritten die 0.</li><li><b>iii) Aufrufe:</b> <code>Calls(n) = n + 1</code>, inklusive des ersten Aufrufs.</li></ul><p>Bei zwei rekursiven Aufrufen (<code>g(n-1); g(n-1);</code>) ist es <code>Calls(n) = 2ⁿ⁺¹ − 1</code>.</p><h2>15 Prüfungs-Checkliste</h2><div class="box">Cheatsheet: Abschnitt 15</div><p>Die häufigsten Fehler, und warum sie passieren:</p><ul><li><b>Overflow:</b> <code>int</code> fasst nur bis 2³¹−1. Bei Potenzen, Fakultäten und Fibonacci rechtzeitig prüfen oder den Wertebereich nennen (bei 2ⁿ: n ≤ 30).</li><li><b>Ganzzahldivision:</b> <code>1 / 2 == 0</code>. Wer ein <code>double</code> will, braucht ein <code>double</code> im Ausdruck (<code>1.0 / 2</code>). <code>%</code> mit negativen Zahlen beachten.</li><li>**<code>=</code> statt <code>==</code>, Vergleichsketten, <code>&amp;&amp;</code> vor <code>||</code>:** Klammern setzen.</li><li><b>Short-circuit:</b> schützt <code>i &lt; n &amp;&amp; v[i] == x</code> vor ungültigem Zugriff, aber nur in dieser Reihenfolge.</li><li>**<code>switch</code> ohne <code>break</code>:** Fall-through.</li><li>**<code>v.size() - 1</code>:** bei leerem Vektor riesig. Index nur <code>0 … size-1</code>.</li><li><b>Vektoren als Referenz übergeben</b>, sonst gehen Änderungen verloren oder es wird kopiert.</li><li><b>Nie eine Referenz auf Lokales zurückgeben.</b></li><li>**Jeden Pfad mit <code>return</code> abschliessen, alles initialisieren, PRE mit <code>assert</code> prüfen.**</li><li><b>Rekursion:</b> Basisfall zuerst, Argument schrumpft, alle Zweige terminieren, Ausgabe-Reihenfolge (vor/nach dem Aufruf) beachten.</li><li><b>Letzter Lauf/Rest</b> nach der Schleife nicht vergessen (RLE!). <code>&lt;</code> oder <code>&lt;=</code> an den Grenzen prüfen. Mitte berechnen als <code>lo + (hi - lo) / 2</code>.</li><li><b>Operatoren:</b> Stream zurückgeben, <code>&gt;&gt;</code> mit <code>T&amp;</code>, Arithmetik per Wert, Zugriff auf <code>private</code>-Member beachten (Abschnitt 9).</li></ul><h3>Welche Übung trainiert welchen Abschnitt?</h3><table><tr><th>Übung (Ordner <code>originalübungen</code>)</th><th>Abschnitt</th></tr><tr><td>Expressions, Expression Evaluation</td><td>2</td></tr><tr><td>From Natural Language to C++</td><td>2</td></tr><tr><td>Multiply with 29, Equivalent Resistance, Rounding</td><td>1, 11</td></tr><tr><td>Loop mix-up (Snippets 1 und 2), Loop Analysis</td><td>3</td></tr><tr><td>Fixing Functions, Pre- and post-conditions</td><td>4</td></tr><tr><td>Const and reference types</td><td>5</td></tr><tr><td>Number of Occurrences, Vector and matrix operations, Sorting by Swapping, Number Pairs with Sum</td><td>6, 7, 12</td></tr><tr><td>Understanding struct &amp; classes, Averager</td><td>8</td></tr><tr><td>Complex Numbers</td><td>9</td></tr><tr><td>Floating-Point Number Representation, Binary Expansion, Approximation of Pi</td><td>10</td></tr><tr><td>Fibonacci primes, Fibonacci overflow check, Perpetual calendar, Decimal to arbitrary base, Run-length encoding</td><td>11, 12</td></tr><tr><td>Recursive function analysis, Reverse Digits</td><td>13</td></tr></table><p>Zum Lernen: Abschnitt hier durcharbeiten, die Übungen dazu lösen (im Projekt <code>./trainer test &lt;lektion&gt;</code>), danach im Cheatsheet den gleichen Stoff in Kurzform wiederfinden.</p></div>
+</body></html>
