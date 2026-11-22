@@ -81,7 +81,8 @@ try:
     from PyQt6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QIcon,
                              QKeySequence, QPainter, QPalette, QShortcut,
                              QSyntaxHighlighter, QTextCharFormat)
-    from PyQt6.QtWidgets import (QApplication, QGroupBox, QMessageBox,
+    from PyQt6.QtWidgets import (QApplication, QRadioButton, QGroupBox,
+                                 QMessageBox,
                                  QComboBox,
                                  QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
@@ -113,6 +114,42 @@ SCHEME = {
     "hl_number": "#098658", "hl_comment": "#6a9955", "hl_preproc": "#7d5d00",
     "zeilen_hg": "#eef1f4", "zeilen_text": "#8a97a5", "zeile_aktiv": "#eef3fb",
 }
+
+
+_THEME_VORGABE = {"stil": None, "palette": None}
+
+
+def _dunkle_palette():
+    p = QPalette()
+    fenster = QColor(45, 45, 48)
+    text = QColor(232, 234, 237)
+    basis = QColor(30, 30, 33)
+    p.setColor(QPalette.ColorRole.Window, fenster)
+    p.setColor(QPalette.ColorRole.WindowText, text)
+    p.setColor(QPalette.ColorRole.Base, basis)
+    p.setColor(QPalette.ColorRole.AlternateBase, QColor(37, 37, 40))
+    p.setColor(QPalette.ColorRole.ToolTipBase, basis)
+    p.setColor(QPalette.ColorRole.ToolTipText, text)
+    p.setColor(QPalette.ColorRole.Text, text)
+    p.setColor(QPalette.ColorRole.Button, fenster)
+    p.setColor(QPalette.ColorRole.ButtonText, text)
+    p.setColor(QPalette.ColorRole.Highlight, QColor(38, 108, 138))
+    p.setColor(QPalette.ColorRole.HighlightedText, text)
+    p.setColor(QPalette.ColorRole.PlaceholderText, QColor(130, 130, 134))
+    return p
+
+
+def theme_anwenden(app, modus):
+    """Hell/Dunkel erzwingen (Fusion) oder den Originalstil wiederherstellen."""
+    app.setStyle("Fusion")
+    if modus == "dunkel":
+        app.setPalette(_dunkle_palette())
+    elif modus == "hell":
+        app.setPalette(QPalette())
+    else:
+        if _THEME_VORGABE["stil"]:
+            app.setStyle(_THEME_VORGABE["stil"])
+        app.setPalette(_THEME_VORGABE["palette"] or QPalette())
 
 
 def farbschema():
@@ -486,6 +523,7 @@ class ConfigDialog(QDialog):
 
     def __init__(self, parent, settings, current_model):
         super().__init__(parent)
+        self.hauptfenster = parent
         self.setWindowTitle("Agent-Konfiguration")
         self.settings = settings
         self.resize(640, 470)
@@ -510,6 +548,19 @@ class ConfigDialog(QDialog):
         v.addWidget(self.model)
         self.models_status = QLabel("Modelle werden geladen …")
         v.addWidget(self.models_status)
+
+        v.addWidget(QLabel("Erscheinungsbild:"))
+        modus = self.settings.value("theme", "") or "auto"
+        self.rb_auto = QRadioButton("Automatisch (folgt dem System)")
+        self.rb_hell = QRadioButton("Hell erzwingen")
+        self.rb_dunkel = QRadioButton("Dunkel erzwingen")
+        fuer = {"auto": self.rb_auto, "hell": self.rb_hell, "dunkel": self.rb_dunkel}
+        fuer[modus].setChecked(True)
+        for wert, rb in (("auto", self.rb_auto), ("hell", self.rb_hell),
+                         ("dunkel", self.rb_dunkel)):
+            rb.toggled.connect(
+                lambda an, w=wert: self.hauptfenster.apply_theme(w) if an else None)
+            v.addWidget(rb)
 
         v.addWidget(QLabel("Pre-Prompt — Vorgabe für jede Agent-Antwort:"))
         self.preprompt_edit = QPlainTextEdit()
@@ -1103,6 +1154,15 @@ class MainWindow(QMainWindow):
         self._save_sizes()
         self.apply_all_sizes()
 
+    def apply_theme(self, modus):
+        self.save_all()
+        theme_anwenden(QApplication.instance(), modus)
+        farbschema()
+        self.apply_all_sizes()
+        self.settings.setValue("theme", modus)
+        if self.current_lesson:
+            self.load_lesson(self.current_lesson)
+
     def apply_all_sizes(self):
         s = self.sizes
         self.tree.setFont(monospace(s["baum"]))
@@ -1547,6 +1607,10 @@ def smoke(w):
     return 0
 
 
+def w_settings_theme():
+    return QSettings("cpp-trainer", "trainer-app").value("theme", "") or "auto"
+
+
 def main():
     if "--smoke" in sys.argv:
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -1556,6 +1620,11 @@ def main():
     icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
+
+    _THEME_VORGABE["stil"] = app.style().objectName()
+    _THEME_VORGABE["palette"] = QPalette(app.palette())
+    theme_anwenden(app, w_settings_theme())
+
     w = MainWindow()
     maximiert = w.settings.value("win/maximized", False, type=bool)
     if "--smoke" in sys.argv:
