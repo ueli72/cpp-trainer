@@ -178,6 +178,25 @@ schritt "5/6 Lernumgebung prüfen"
 chmod +x trainer lernen 2>/dev/null || chmod +x trainer
 if [ "$WANT_APP" = true ]; then
   chmod +x app/start.sh 2>/dev/null || true
+
+  # Desktop-Starter: App per Doppelklick im Anwendungsmenü/Dateimanager
+  DESKTOP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+  mkdir -p "$DESKTOP_DIR"
+  ICON="$ROOT/app/icon.png"
+  {
+    echo "[Desktop Entry]"
+    echo "Type=Application"
+    echo "Name=C++ Trainer"
+    echo "Comment=Lernumgebung für C++ (Aufgaben, Tests, KI-Agent)"
+    echo "Exec=\"$ROOT/app/start.sh\""
+    [ -f "$ICON" ] && echo "Icon=$ICON"
+    echo "Terminal=false"
+    echo "Categories=Development;Education;"
+    echo "StartupWMClass=cpp-trainer"
+  } > "$DESKTOP_DIR/cpp-trainer.desktop"
+  command -v update-desktop-database >/dev/null 2>&1 && \
+    update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
+  ok "Desktop-Starter angelegt (cpp-trainer.desktop mit Icon)."
 fi
 echo "g++:       $(g++ --version | head -1)"
 echo "opencode:  $(opencode --version)"

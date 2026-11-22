@@ -63,7 +63,7 @@ def fail(msg):
 try:
     from PyQt6.QtCore import (QEvent, Qt, QTimer, QProcess,
                               QRegularExpression, QSettings)
-    from PyQt6.QtGui import (QBrush, QColor, QFont, QSyntaxHighlighter,
+    from PyQt6.QtGui import (QBrush, QColor, QFont, QIcon, QSyntaxHighlighter,
                              QTextCharFormat)
     from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
@@ -1002,6 +1002,10 @@ def main():
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QApplication(sys.argv)
     app.setApplicationName("C++ Trainer")
+    app.setDesktopFileName("cpp-trainer")
+    icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
     w = MainWindow()
     if "--smoke" in sys.argv:
         return smoke(w)
