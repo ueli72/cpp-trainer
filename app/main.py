@@ -76,16 +76,17 @@ def fail(msg):
 
 
 try:
-    from PyQt6.QtCore import (QEvent, QPoint, QRect, Qt, QTimer, QProcess,
-                              QRegularExpression, QSettings)
+    from PyQt6.QtCore import (QEvent, QPoint, QRect, QSize, Qt, QTimer,
+                              QProcess, QRegularExpression, QSettings)
     from PyQt6.QtGui import (QBrush, QColor, QFont, QGuiApplication, QIcon,
-                             QPalette, QSyntaxHighlighter, QTextCharFormat)
+                             QPainter, QPalette, QSyntaxHighlighter,
+                             QTextCharFormat)
     from PyQt6.QtWidgets import (QApplication, QMessageBox, QComboBox,
                                  QDialog, QHBoxLayout,
                                  QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
                                  QPushButton, QSpinBox, QSplitter, QTabWidget,
                                  QTextBrowser, QTreeWidget, QTreeWidgetItem,
-                                 QVBoxLayout, QWidget)
+                                 QVBoxLayout, QWidget, QTextEdit)
 except ImportError:
     fail("PyQt6 ist nicht installiert.\n"
          "Bitte die App über ./start.sh starten (richtet alles ein).")
@@ -109,6 +110,7 @@ SCHEME = {
     "warn": "#b26a00", "success": "#2e7d32", "pygments": "friendly",
     "hl_keyword": "#0033b3", "hl_type": "#7d3fa3", "hl_string": "#a31515",
     "hl_number": "#098658", "hl_comment": "#6a9955", "hl_preproc": "#7d5d00",
+    "zeilen_hg": "#eef1f4", "zeilen_text": "#8a97a5", "zeile_aktiv": "#eef3fb",
 }
 
 
@@ -125,6 +127,8 @@ def farbschema():
             "hl_keyword": "#0033b3", "hl_type": "#7d3fa3",
             "hl_string": "#a31515", "hl_number": "#098658",
             "hl_comment": "#6a9955", "hl_preproc": "#7d5d00",
+            "zeilen_hg": "#eef1f4", "zeilen_text": "#8a97a5",
+            "zeile_aktiv": "#eef3fb",
         })
     else:
         SCHEME.update({
@@ -134,6 +138,8 @@ def farbschema():
             "hl_keyword": "#569cd6", "hl_type": "#4ec9b0",
             "hl_string": "#ce9178", "hl_number": "#b5cea8",
             "hl_comment": "#6a9955", "hl_preproc": "#c586c0",
+            "zeilen_hg": "#22262d", "zeilen_text": "#6e7681",
+            "zeile_aktiv": "#2b333d",
         })
     return SCHEME
 
@@ -259,9 +265,80 @@ class CppHighlighter(QSyntaxHighlighter):
 
 # ------------------------------------------------------------- Editor
 
+class ZeilenNummernLeiste(QWidget):
+    """Zeilennummern links neben dem Editor (Muster: Qt Code Editor Example)."""
+
+    def __init__(self, editor):
+        super().__init__(editor)
+        self.editor = editor
+
+    def _breite(self):
+        ziffern = max(2, len(str(max(1, self.editor.blockCount()))))
+        return 14 + self.editor.fontMetrics().horizontalAdvance("9") * ziffern
+
+    def sizeHint(self):
+        return QSize(self._breite(), 0)
+
+    def aktualisiere_breite(self, *_):
+        if self._breite() != self.width():
+            self.setFixedWidth(self._breite())
+
+    def paintEvent(self, event):
+        maler = QPainter(self)
+        maler.fillRect(event.rect(), QColor(SCHEME["zeilen_hg"]))
+        block = self.editor.firstVisibleBlock()
+        nummer = block.blockNumber()
+        oben = round(self.editor.blockBoundingGeometry(block).translated(
+            self.editor.contentOffset()).top())
+        while block.isValid() and oben <= event.rect().bottom():
+            if block.isVisible():
+                maler.setPen(QColor(SCHEME["zeilen_text"]))
+                maler.drawText(0, oben, self.width() - 8,
+                               self.editor.fontMetrics().height(),
+                               Qt.AlignmentFlag.AlignRight, str(nummer + 1))
+            block = block.next()
+            oben = round(self.editor.blockBoundingGeometry(block).translated(
+                self.editor.contentOffset()).top())
+            nummer += 1
+        maler.end()
+
+
 class CodeEditor(QPlainTextEdit):
-    """Editor mit Auto-Einrückung: Bei Enter bekommt die neue Zeile die
-    Einrückung der vorherigen Zeile — endet diese mit {, eine Stufe extra."""
+    """Editor mit Zeilennummern, Markierung der aktuellen Zeile und
+    Auto-Einrückung (Enter erbt die Einrückung, { gibt eine Stufe extra)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.leiste = ZeilenNummernLeiste(self)
+        self.blockCountChanged.connect(self._leistenbreite_aktualisieren)
+        self.updateRequest.connect(self._leisten_aktualisieren)
+        self.cursorPositionChanged.connect(self._aktuelle_zeile)
+        self._leistenbreite_aktualisieren()
+
+    def _leistenbreite_aktualisieren(self, *_):
+        self.leiste.setFixedWidth(self.leiste._breite())
+
+    def _leisten_aktualisieren(self, rect, dy):
+        if dy:
+            self.leiste.scroll(0, dy)
+        else:
+            self.leiste.update(0, rect.y(), self.leiste.width(), rect.height())
+        if self.leiste._breite() != self.leiste.width():
+            self.leiste.setFixedWidth(self.leiste._breite())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        cr = self.contentsRect()
+        self.leiste.setGeometry(
+            QRect(cr.left(), cr.top(), self.leiste._breite(), cr.height()))
+
+    def _aktuelle_zeile(self):
+        auswahl = QTextEdit.ExtraSelection()
+        auswahl.format.setBackground(QColor(SCHEME["zeile_aktiv"]))
+        auswahl.format.setProperty(
+            QTextCharFormat.Property.FullWidthSelection, True)
+        auswahl.cursor = self.textCursor()
+        self.setExtraSelections([auswahl])
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
@@ -1058,6 +1135,10 @@ class MainWindow(QMainWindow):
         if kind == "reset":
             self.progress = self._load_progress()
             self._apply_progress()
+            self.reload_tree()
+            if (self.current_lesson
+                    and os.path.isdir(os.path.join(LEKTIONEN_DIR, self.current_lesson))):
+                self.load_lesson(self.current_lesson)
 
         # Fortschritt: Testlauf komplett bestanden → Aufgabe abgeschlossen
         if (kind == "test" and lesson and code == 0
@@ -1224,6 +1305,16 @@ class MainWindow(QMainWindow):
         if self.agent_proc is not None:
             self.agent_proc.kill()
 
+    def editor_kontext(self):
+        """Zeilen-Kontext für den Agenten: offene Datei + Cursor-Zeile."""
+        editor = self.tabs.currentWidget()
+        if editor is None:
+            return ""
+        datei = os.path.basename(str(editor.property("path") or "main.cpp"))
+        zeile = editor.textCursor().blockNumber() + 1
+        return (f"\n[Editor: offene Datei {datei}, Cursor in Zeile {zeile} "
+                "- beziehe dich bei Hinweisen auf Zeilennummern]")
+
     def agent_send(self, question, attach_console=False):
         if self.agent_proc is not None:
             return
@@ -1242,6 +1333,7 @@ class MainWindow(QMainWindow):
             prompt += "\n\n[Letzte Ausgabe des Trainer-Skripts]:\n" + tail
         lesson_abs = os.path.join(LEKTIONEN_DIR, self.current_lesson)
         prompt += f"\n\n[Aktuelle Lektion: {lesson_abs}]"
+        prompt += self.editor_kontext()
 
         slug = re.sub(r"[^a-z0-9]+", "_", self.current_lesson.lower()).strip("_")
         session_id = "ses_trainer_v2_" + slug
