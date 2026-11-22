@@ -396,14 +396,43 @@ class ConfigDialog(QDialog):
         self._models_proc = QProcess(self)
         self._models_proc.setWorkingDirectory(ROOT)
         self._models_proc.finished.connect(self._models_done)
+        self._models_proc.errorOccurred.connect(self._models_error)
         self._models_proc.start("opencode", ["models"])
+        QTimer.singleShot(60000, self._models_timeout)
+
+    def _models_free(self):
+        """Prozess freigeben — True, wenn dieser Handler zuständig war."""
+        proc = getattr(self, "_models_proc", None)
+        if proc is None:
+            return False
+        proc.kill()
+        self._models_proc = None
+        return True
+
+    def _models_timeout(self):
+        if self._models_free():
+            self.models_status.setText(
+                "Timeout — läuft `opencode models` im Projektordner im Terminal? "
+                "(Beim ersten Start lädt opencode die Modell-Liste aus dem Netz.)")
+
+    def _models_error(self, err):
+        if err != QProcess.ProcessError.FailedToStart:
+            return   # Absturz/Timeout behandelt _models_done
+        if self._models_free():
+            self.models_status.setText(
+                "opencode konnte nicht gestartet werden — "
+                "./install.sh ausführen oder `opencode` einmal im Terminal starten.")
 
     def _models_done(self, code, _status):
+        proc = self._models_proc
+        self._models_proc = None
+        if proc is None:
+            return
         if code != 0:
             self.models_status.setText("`opencode models` fehlgeschlagen — "
                                        "Modell bitte von Hand eintippen.")
             return
-        data = bytes(self._models_proc.readAllStandardOutput()).decode("utf-8", "replace")
+        data = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
         models = sorted(line.strip() for line in data.splitlines()
                         if "/" in line.strip())
         current = self.model.currentText()
@@ -415,10 +444,34 @@ class ConfigDialog(QDialog):
     def fetch_version(self):
         self._version_proc = QProcess(self)
         self._version_proc.finished.connect(self._version_done)
+        self._version_proc.errorOccurred.connect(self._version_error)
         self._version_proc.start("opencode", ["--version"])
+        QTimer.singleShot(15000, self._version_timeout)
+
+    def _version_free(self):
+        proc = getattr(self, "_version_proc", None)
+        if proc is None:
+            return False
+        proc.kill()
+        self._version_proc = None
+        return True
+
+    def _version_timeout(self):
+        if self._version_free():
+            self.version_label.setText("Timeout — läuft `opencode --version` im Terminal?")
+
+    def _version_error(self, err):
+        if err != QProcess.ProcessError.FailedToStart:
+            return
+        if self._version_free():
+            self.version_label.setText("opencode nicht gefunden — ./install.sh ausführen.")
 
     def _version_done(self, code, _status):
-        data = bytes(self._version_proc.readAllStandardOutput()).decode("utf-8", "replace").strip()
+        proc = self._version_proc
+        self._version_proc = None
+        if proc is None:
+            return
+        data = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace").strip()
         self.version_label.setText(data if data else "opencode nicht gefunden!")
 
     def test_connection(self):
@@ -437,11 +490,21 @@ class ConfigDialog(QDialog):
         self._test_proc = QProcess(self)
         self._test_proc.setWorkingDirectory(ROOT)
         self._test_proc.finished.connect(self._test_done)
+        self._test_proc.errorOccurred.connect(self._test_error)
         self._test_proc.start("opencode", ["run", "--standalone", "-m", model,
                                            "-s", "ses_trainer_config_test",
                                            "--auto", "Antworte mit genau: OK"])
         self._test_proc.closeWriteChannel()   # stdin schließen — sonst wartet opencode
         self._test_timer.start()
+
+    def _test_error(self, err):
+        if err != QProcess.ProcessError.FailedToStart:
+            return
+        self._test_timer.stop()
+        self.b_test.setText("Verbindung testen")
+        self.status.setText("opencode konnte nicht gestartet werden - "
+                            "./install.sh ausfuehren.")
+        self._test_proc = None
 
     def _test_tick(self):
         self._test_seconds += 1
@@ -451,8 +514,12 @@ class ConfigDialog(QDialog):
     def _test_done(self, code, _status):
         self._test_timer.stop()
         self.b_test.setText("Verbindung testen")
-        data = bytes(self._test_proc.readAllStandardOutput()).decode("utf-8", "replace")
-        err = bytes(self._test_proc.readAllStandardError()).decode("utf-8", "replace")
+        proc = self._test_proc
+        self._test_proc = None
+        if proc is None:
+            return
+        data = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
+        err = bytes(proc.readAllStandardError()).decode("utf-8", "replace")
         text = strip_ansi(data + err).strip()
         self._test_proc = None
         if self._test_cancelled:
@@ -908,6 +975,7 @@ class MainWindow(QMainWindow):
         self.agent_proc.readyReadStandardOutput.connect(self._agent_stdout)
         self.agent_proc.readyReadStandardError.connect(self._agent_stderr)
         self.agent_proc.finished.connect(self._agent_finished)
+        self.agent_proc.errorOccurred.connect(self._agent_error)
         self.agent_send_btn.setEnabled(False)
         self.agent_abort_btn.setEnabled(True)
         self.agent_raw = ""
@@ -935,6 +1003,16 @@ class MainWindow(QMainWindow):
                 continue
             if "Error" in s or "limit" in s.lower() or "fatal" in s.lower():
                 self.agent_chat.add_error(s)
+
+    def _agent_error(self, err):
+        if err != QProcess.ProcessError.FailedToStart:
+            return
+        self.agent_chat.add_error(
+            "opencode konnte nicht gestartet werden - ./install.sh ausfuehren "
+            "oder opencode einmal im Terminal starten.")
+        self.agent_proc = None
+        self.agent_send_btn.setEnabled(True)
+        self.agent_abort_btn.setEnabled(False)
 
     def _agent_finished(self, code, _status):
         if self.agent_text.strip():
