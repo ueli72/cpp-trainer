@@ -24,6 +24,16 @@ while (std::cin >> x) {          // läuft, solange Zahlen kommen
 while (zahl > 0) { … zahl = zahl / 10; … }   // stoppt, wenn zahl 0 ist
 ```
 
+## do while — wenn er mindestens einmal laufen soll
+```cpp
+do {
+    std::cin >> x;                 // erst handeln …
+} while (x != 0);                  // … dann prüfen (Semikolon hinter while!)
+```
+- Die Prüfung kommt **nach** der ersten Runde — der Körper läuft garantiert mindestens einmal
+- Typisch beim Einlesen: der erste Wert muss gelesen sein, BEVOR man ihn prüfen kann
+- Während `while` vorher prüft (Eventuell 0 Runden), prüft `do while` hinterher (mindestens 1 Runde)
+
 ## Klassische Muster (immer dieselben drei Variablen)
 | Zweck | Start | Je Runde |
 |---|---|---|
@@ -48,4 +58,4 @@ Anzahl: 4         Summe: 100           Maximum: 42
 ```
 
 ## Testen
-`./trainer test schleifen/01` … `./trainer run schleifen/03` — sichtbar in `tests/`
+`./trainer test schleifen/01` … `./trainer test schleifen/09` — sichtbar in `tests/`
