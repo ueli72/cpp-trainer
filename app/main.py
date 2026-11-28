@@ -845,6 +845,12 @@ class MainWindow(QMainWindow):
         self.settings = QSettings("cpp-trainer", "trainer-app")
         self.sizes = self._load_sizes()
 
+        # Editoren pro Aufgabe im Speicher behalten: Undo-/Redo-Verlauf,
+        # Cursor- und Scrollposition überleben so den Wechsel zwischen
+        # Aufgaben (separate Historie je Aufgabe).
+        self._editor_cache = {}   # Lektion -> [Editoren]
+        self._editor_mtimes = {}  # Pfad -> mtime beim letzten Laden/Speichern
+
         central = QWidget()
         self.setCentralWidget(central)
         layout = QHBoxLayout(central)
@@ -874,17 +880,29 @@ class MainWindow(QMainWindow):
         self.btn_reset = QPushButton("↺ Zurücksetzen")
         self.btn_reset.setToolTip(
             "Aufgabe auf den Originalzustand zurücksetzen (Lösung wird verworfen!)")
+        self.btn_undo = QPushButton("↶")
+        self.btn_undo.setFixedWidth(34)
+        self.btn_undo.setToolTip("Rückgängig (Strg+Z) — Verlauf gilt pro Aufgabe")
+        self.btn_redo = QPushButton("↷")
+        self.btn_redo.setFixedWidth(34)
+        self.btn_redo.setToolTip("Wiederholen (Strg+Shift+Z) — Verlauf gilt pro Aufgabe")
         for w in (self.btn_build, self.btn_test, self.btn_run, self.btn_reset):
             w.setEnabled(False)
+        self.btn_undo.setEnabled(False)
+        self.btn_redo.setEnabled(False)
         self.btn_build.clicked.connect(self.do_build)
         self.btn_test.clicked.connect(self.do_test)
         self.btn_run.clicked.connect(self.do_run)
         self.btn_save.clicked.connect(self.do_save)
         QShortcut(QKeySequence.StandardKey.Save, self).activated.connect(self.do_save)
         self.btn_reset.clicked.connect(self.do_reset)
+        self.btn_undo.clicked.connect(self.do_undo)
+        self.btn_redo.clicked.connect(self.do_redo)
         bar.addWidget(self.btn_build)
         bar.addWidget(self.btn_run)
         bar.addWidget(self.btn_test)
+        bar.addWidget(self.btn_undo)
+        bar.addWidget(self.btn_redo)
         bar.addWidget(self.btn_save)
         bar.addWidget(self.btn_reset)
         bar.addStretch(1)
@@ -897,6 +915,7 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.setFont(monospace(self.sizes["editor"]))
         self.tabs.setDocumentMode(True)
+        self.tabs.currentChanged.connect(self.update_undo_redo_buttons)
         center_layout.addWidget(self.tabs, 1)
 
         self.bottom = QTabWidget()
@@ -989,6 +1008,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("win/maximized", self.isMaximized())
 
     def closeEvent(self, event):
+        self.save_all()   # ungespeicherte Änderungen nicht verlieren
         self._fenster_speichern()
         super().closeEvent(event)
 
@@ -1025,30 +1045,48 @@ class MainWindow(QMainWindow):
             self.load_lesson(rel)
 
     def load_lesson(self, rel):
+        # Ungespeicherte Änderungen sichern, bevor umgehängt wird — sonst
+        # gehen getippte Änderungen verloren, wenn man nur kurz in einer
+        # anderen Lektion nachsehen will.
+        self.save_all()
         self.current_lesson = rel
         ldir = os.path.join(LEKTIONEN_DIR, rel)
+
+        # Alte Tabs aushängen, aber die Editoren behalten: Undo-/Redo-Verlauf,
+        # Cursor- und Scrollposition bleiben pro Aufgabe erhalten.
+        while self.tabs.count():
+            self.tabs.removeTab(self.tabs.count() - 1)
 
         # Tabs: main.cpp zuerst, dann Rest
         files = sorted(glob.glob(os.path.join(ldir, "*.cpp"))) + \
                 sorted(glob.glob(os.path.join(ldir, "*.h")))
         files.sort(key=lambda p: (os.path.basename(p) != "main.cpp", p))
-        self.tabs.clear()
-        for path in files:
-            editor = CodeEditor()
-            editor.setFont(monospace(self.sizes["editor"]))
-            try:
-                with open(path, encoding="utf-8") as f:
-                    editor.setPlainText(f.read())
-            except OSError as e:
-                editor.setPlainText(f"(Datei konnte nicht gelesen werden: {e})")
-            editor.setProperty("path", path)
-            editor.document().setModified(False)
-            editor.document().modificationChanged.connect(self.update_save_button)
-            editor.hl = CppHighlighter(editor.document())
-            editor.document().setDefaultFont(monospace(self.sizes["editor"]))
-            fm = editor.fontMetrics()
-            editor.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
-            self.tabs.addTab(editor, os.path.basename(path))
+
+        editoren = self._editor_cache.get(rel)
+        if editoren is None:
+            editoren = [self._erzeuge_editor(p) for p in files]
+            self._editor_cache[rel] = editoren
+        else:
+            # Extern geändert (z. B. in VSCodium)? Dann die Ansicht auffrischen.
+            for editor, path in zip(editoren, files):
+                mtime = self._datei_mtime(path)
+                if mtime == self._editor_mtimes.get(path):
+                    continue
+                if editor.document().isModified():
+                    self.console.write_line(
+                        f"Hinweis: {os.path.basename(path)} wurde außerhalb "
+                        "geändert — beim nächsten Speichern gewinnt der Stand "
+                        "im Editor.", color=SCHEME["warn"])
+                else:
+                    try:
+                        with open(path, encoding="utf-8") as f:
+                            editor.setPlainText(f.read())
+                    except OSError as e:
+                        self.console.write_line(
+                            f"Datei konnte nicht gelesen werden: {e}",
+                            color=SCHEME["error"])
+                self._editor_mtimes[path] = mtime
+        self._editoren_einhaengen(editoren)
 
         # Aufgabe
         try:
@@ -1064,6 +1102,38 @@ class MainWindow(QMainWindow):
         self.btn_test.setEnabled(True)
         self.btn_cheat.setEnabled(True)
         self.console.write_line(f"== Lektion geladen: {rel} ==")
+        self.update_undo_redo_buttons()
+
+    def _datei_mtime(self, path):
+        try:
+            return os.path.getmtime(path)
+        except OSError:
+            return None
+
+    def _erzeuge_editor(self, path):
+        """Neuen Editor für eine Datei anlegen (Highlighter, Zeilennummern)."""
+        editor = CodeEditor()
+        editor.setFont(monospace(self.sizes["editor"]))
+        try:
+            with open(path, encoding="utf-8") as f:
+                editor.setPlainText(f.read())
+        except OSError as e:
+            editor.setPlainText(f"(Datei konnte nicht gelesen werden: {e})")
+        editor.setProperty("path", path)
+        editor.document().setModified(False)
+        editor.document().modificationChanged.connect(self.update_save_button)
+        editor.undoAvailable.connect(self.update_undo_redo_buttons)
+        editor.redoAvailable.connect(self.update_undo_redo_buttons)
+        editor.hl = CppHighlighter(editor.document())
+        editor.document().setDefaultFont(monospace(self.sizes["editor"]))
+        fm = editor.fontMetrics()
+        editor.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
+        self._editor_mtimes[path] = self._datei_mtime(path)
+        return editor
+
+    def _editoren_einhaengen(self, editoren):
+        for editor in editoren:
+            self.tabs.addTab(editor, os.path.basename(str(editor.property("path"))))
 
     # ------------------------------------------------------------ Dateien
 
@@ -1080,18 +1150,48 @@ class MainWindow(QMainWindow):
 
     def update_save_button(self, _modified=False):
         """💾 aktiv, sobald ein offener Tab ungespeicherte Änderungen hat."""
-        dirty = any(self.tabs.widget(i).document().isModified()
-                    for i in range(self.tabs.count()))
+        dirty = any(editor.document().isModified()
+                    for editoren in self._editor_cache.values()
+                    for editor in editoren)
         self.btn_save.setEnabled(dirty)
 
+    def update_undo_redo_buttons(self, *_):
+        """↶/↷ je nach Undo-/Redo-Verlauf des sichtbaren Editors aktivieren."""
+        editor = self.tabs.currentWidget()
+        if editor is None:
+            self.btn_undo.setEnabled(False)
+            self.btn_redo.setEnabled(False)
+            return
+        self.btn_undo.setEnabled(editor.document().isUndoAvailable())
+        self.btn_redo.setEnabled(editor.document().isRedoAvailable())
+
+    def do_undo(self):
+        editor = self.tabs.currentWidget()
+        if editor is not None:
+            editor.undo()
+
+    def do_redo(self):
+        editor = self.tabs.currentWidget()
+        if editor is not None:
+            editor.redo()
+
     def save_all(self):
-        for i in range(self.tabs.count()):
-            editor = self.tabs.widget(i)
-            path = editor.property("path")
-            if path and editor.document().isModified():
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(editor.toPlainText())
-                editor.document().setModified(False)
+        for editoren in self._editor_cache.values():
+            for editor in editoren:
+                path = editor.property("path")
+                if path and editor.document().isModified():
+                    try:
+                        with open(path, "w", encoding="utf-8") as f:
+                            f.write(editor.toPlainText())
+                    except OSError as e:
+                        self.console.write_line(
+                            f"Speichern fehlgeschlagen: {path}: {e}",
+                            color=SCHEME["error"])
+                    else:
+                        editor.document().setModified(False)
+                        # mtime nachführen, damit der eigene Speichern nicht
+                        # als "externe Änderung" erkannt wird.
+                        self._editor_mtimes[path] = self._datei_mtime(path)
 
     # ------------------------------------------------------------ Fortschritt
 
@@ -1162,6 +1262,10 @@ class MainWindow(QMainWindow):
         self.apply_all_sizes()
         self._apply_progress()   # Baum-Einträge in den neuen Farben neu zeichnen
         self.settings.setValue("theme", modus)
+        # Editoren neu aufbauen, damit die Syntax-Highlighting-Farben zum
+        # neuen Theme passen (Undo-Verlauf geht dabei verloren).
+        self._editor_cache.clear()
+        self._editor_mtimes.clear()
         if self.current_lesson:
             self.load_lesson(self.current_lesson)
 
@@ -1169,16 +1273,15 @@ class MainWindow(QMainWindow):
         s = self.sizes
         self.tree.setFont(monospace(s["baum"]))
         self.tabs.setFont(monospace(s["editor"]))
-        for i in range(self.tabs.count()):
-            ed = self.tabs.widget(i)
-            if ed is None:
-                continue
-            ed.setFont(monospace(s["editor"]))
-            ed.document().setDefaultFont(monospace(s["editor"]))
-            fm = ed.fontMetrics()
-            ed.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
-            if hasattr(ed, "_leistenbreite_aktualisieren"):
-                ed._leistenbreite_aktualisieren()
+        # Alle Cached-Editoren ansprechen — nicht nur die sichtbaren Tabs.
+        for editoren in self._editor_cache.values():
+            for ed in editoren:
+                ed.setFont(monospace(s["editor"]))
+                ed.document().setDefaultFont(monospace(s["editor"]))
+                fm = ed.fontMetrics()
+                ed.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
+                if hasattr(ed, "_leistenbreite_aktualisieren"):
+                    ed._leistenbreite_aktualisieren()
         self.console.setFont(monospace(s["konsole"]))
         self.console_input.setFont(monospace(s["konsole"]))
         self.agent_chat.setFont(monospace(s["agent"]))
@@ -1263,6 +1366,10 @@ class MainWindow(QMainWindow):
         self.set_busy(False)
 
         if kind == "update":
+            # Dateien können sich geändert haben — alle Cached-Editoren
+            # (inkl. Undo-Verläufe) verwerfen und neu laden.
+            self._editor_cache.clear()
+            self._editor_mtimes.clear()
             self.reload_tree()
             if (self.current_lesson
                     and os.path.isdir(os.path.join(LEKTIONEN_DIR, self.current_lesson))):
@@ -1283,6 +1390,13 @@ class MainWindow(QMainWindow):
             self.progress = self._load_progress()
             self._apply_progress()
             self.reload_tree()
+            # Cached-Editor der zurückgesetzten Aufgabe verwerfen — der
+            # Inhalt wird von der Platte neu geladen (Undo-Verlauf leer).
+            if lesson:
+                self._editor_cache.pop(lesson, None)
+                basis = os.path.join(LEKTIONEN_DIR, lesson) + os.sep
+                for p in [k for k in self._editor_mtimes if k.startswith(basis)]:
+                    del self._editor_mtimes[p]
             if (self.current_lesson
                     and os.path.isdir(os.path.join(LEKTIONEN_DIR, self.current_lesson))):
                 self.load_lesson(self.current_lesson)
