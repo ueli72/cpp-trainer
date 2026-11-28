@@ -1045,7 +1045,7 @@ class MainWindow(QMainWindow):
             editor.document().setModified(False)
             editor.document().modificationChanged.connect(self.update_save_button)
             editor.hl = CppHighlighter(editor.document())
-            editor.document().setDefaultFont(monospace())
+            editor.document().setDefaultFont(monospace(self.sizes["editor"]))
             fm = editor.fontMetrics()
             editor.setTabStopDistance(fm.horizontalAdvance(" ") * 4)
             self.tabs.addTab(editor, os.path.basename(path))
