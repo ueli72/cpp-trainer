@@ -1160,6 +1160,7 @@ class MainWindow(QMainWindow):
         theme_anwenden(QApplication.instance(), modus)
         farbschema()
         self.apply_all_sizes()
+        self._apply_progress()   # Baum-Einträge in den neuen Farben neu zeichnen
         self.settings.setValue("theme", modus)
         if self.current_lesson:
             self.load_lesson(self.current_lesson)
@@ -1625,6 +1626,7 @@ def main():
     _THEME_VORGABE["stil"] = app.style().objectName()
     _THEME_VORGABE["palette"] = QPalette(app.palette())
     theme_anwenden(app, w_settings_theme())
+    farbschema()   # SCHEME (Baum/Konsole/Hervorhebung) an die Start-Palette anpassen
 
     w = MainWindow()
     maximiert = w.settings.value("win/maximized", False, type=bool)
