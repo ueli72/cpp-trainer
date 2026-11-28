@@ -1,0 +1,8 @@
+enqueue 4
+enqueue 9
+print
+print_reverse
+dequeue
+enqueue 7
+print
+end

@@ -1,0 +1,5 @@
+enqueue 5
+dequeue
+is_empty
+print
+end
