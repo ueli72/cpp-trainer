@@ -769,7 +769,7 @@ class EinstellungenDialog(QDialog):
         vu.addWidget(self.update_ausgabe, 1)
         v.addWidget(gruppe_updates)
 
-        gruppe_schrift = QGroupBox("Schriftgrößen (Punkte)")
+        gruppe_schrift = QGroupBox("Schriftgrößen (Punkte — oder Strg+Mausrad\nüber dem Bereich halten)")
         vs = QVBoxLayout(gruppe_schrift)
         self.spins = {}
         for key, label in self.BEREICHE:
@@ -850,6 +850,7 @@ class MainWindow(QMainWindow):
         # Aufgaben (separate Historie je Aufgabe).
         self._editor_cache = {}   # Lektion -> [Editoren]
         self._editor_mtimes = {}  # Pfad -> mtime beim letzten Laden/Speichern
+        self._wheel_acc = 0       # Mausrad-Restwinkel für Strg+Mausrad-Zoom
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -1566,7 +1567,45 @@ class MainWindow(QMainWindow):
                     and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)):
                 self.agent_send_from_input()
                 return True
+        # Strg+Mausrad: Schriftgröße des Bereichs unter der Maus ändern
+        if (event.type() == QEvent.Type.Wheel
+                and event.modifiers() & Qt.KeyboardModifier.ControlModifier):
+            key = self.bereich_fuer_widget(obj)
+            if key:
+                delta = event.angleDelta().y()
+                self._wheel_acc += delta
+                schritte = int(self._wheel_acc / 120)
+                if schritte:
+                    self._wheel_acc -= schritte * 120
+                    neu = max(7, min(24, self.sizes[key] + schritte))
+                    if neu != self.sizes[key]:
+                        self.set_size(key, neu)
+                return True   # Zoomen, nicht scrollen
+            self._wheel_acc = 0
         return super().eventFilter(obj, event)
+
+    def bereich_fuer_widget(self, w):
+        """Schriftgrößen-Schlüssel des Bereichs, in dem das Widget liegt."""
+        while w is not None:
+            if w is self.tree:
+                return "baum"
+            if w is self.tabs or w is self.tabs.tabBar() or self._ist_editor(w):
+                return "editor"
+            if w is self.console:
+                return "konsole"
+            if w is self.bottom:
+                return "agent" if self.bottom.currentIndex() == 1 else "konsole"
+            if w is self.agent_chat or w is self.agent_input:
+                return "agent"
+            if w is self.task_browser or w is self.task_title:
+                return "aufgabe"
+            if isinstance(w, QTextBrowser):   # Cheatsheet-Fenster
+                return "aufgabe"
+            w = w.parentWidget()
+        return None
+
+    def _ist_editor(self, w):
+        return any(w in editoren for editoren in self._editor_cache.values())
 
     def agent_abort(self):
         if self.agent_proc is not None:
@@ -1743,6 +1782,7 @@ def main():
     farbschema()   # SCHEME (Baum/Konsole/Hervorhebung) an die Start-Palette anpassen
 
     w = MainWindow()
+    app.installEventFilter(w)   # Strg+Mausrad: Schriftgröße je Bereich
     maximiert = w.settings.value("win/maximized", False, type=bool)
     if "--smoke" in sys.argv:
         return smoke(w)
